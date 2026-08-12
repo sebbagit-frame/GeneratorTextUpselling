@@ -1,0 +1,134 @@
+body {
+  font-family: Arial, sans-serif;
+  max-width: 650px;
+  margin: 30px auto;
+  padding: 0 15px;
+  background: white;
+  color: #222;
+}
+h2 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1a1a2e;
+}
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+input,
+select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+.row {
+  display: flex;
+  gap: 10px;
+}
+.row > div {
+  flex: 1;
+}
+.radio-group label {
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+button {
+  margin-top: 18px;
+  background: #ff0033;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+button:hover {
+  background: #245a94;
+}
+#resultado {
+  white-space: pre-wrap;
+  background: #eef1f5;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 40px;
+}
+.oculto {
+  display: none;
+}
+.copiar {
+  background: cornflowerblue;
+  margin-left: 8px;
+}
+.copiar:hover {
+  background: #276749;
+}
+.dispositivo-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  position: relative;
+  background: #fafbfc;
+}
+.dispositivo-item .quitar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #c53030;
+  padding: 3px 9px;
+  font-size: 12px;
+  margin: 0;
+}
+.dispositivo-item .quitar:hover {
+  background: #9b2c2c;
+}
+.disp-aviso {
+  color: #c53030;
+  font-size: 13px;
+  margin-top: 6px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+}
+th,
+td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+th {
+  color: #4a5568;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+table button {
+  margin-top: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+table .editar {
+  background: #4a5568;
+}
+button.secundario {
+  background: #718096;
+  margin-left: 8px;
+}

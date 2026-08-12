@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin - GeneratorUPS</title>
+
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+    <h2>Admin - GeneratorUPS</h2>
+    <p><a href="../index.html">&larr; Volver al formulario</a></p>
+
+    <div class="card">
+      <h3>Dispositivos</h3>
+
+      <label>Línea</label>
+      <select id="admLinea">
+        <option value="verisure">Verisure</option>
+        <option value="presense">Presense</option>
+      </select>
+
+      <form id="formDispositivo">
+        <input type="hidden" id="dispEditId" />
+
+        <label>Nombre</label>
+        <input id="dispNombre" required />
+
+        <div class="row">
+          <div>
+            <label>Valor Alto</label>
+            <input id="dispAlto" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>Valor Medio</label>
+            <input id="dispMedio" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>Valor Bajo</label>
+            <input id="dispBajo" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>Valor Financiado</label>
+            <input id="dispFinanciado" type="number" step="0.01" />
+          </div>
+        </div>
+
+        <button type="submit" id="dispSubmitBtn">Agregar dispositivo</button>
+        <button type="button" id="dispCancelarBtn" class="secundario oculto">
+          Cancelar edición
+        </button>
+      </form>
+
+      <table id="tablaDispositivos">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Alto</th>
+            <th>Medio</th>
+            <th>Bajo</th>
+            <th>Financiado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Operadores</h3>
+
+      <form id="formOperador">
+        <input type="hidden" id="opEditMatriculaOriginal" />
+
+        <label>Nombre</label>
+        <input id="opNombre" required />
+
+        <label>Matrícula</label>
+        <input id="opMatricula" required />
+
+        <button type="submit" id="opSubmitBtn">Agregar operador</button>
+        <button type="button" id="opCancelarBtn" class="secundario oculto">
+          Cancelar edición
+        </button>
+      </form>
+
+      <table id="tablaOperadores">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Matrícula</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </body>
+
+  <script type="module" src="admin.js"></script>
+</html>

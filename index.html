@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generador de Speech - Upselling</title>
+
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h2>Generador de Speech - Ampliación / Upselling</h2>
+    <p><a href="admin/index.html">Ir a Admin</a></p>
+
+    <div class="card">
+      <label>Dispositivos</label>
+      <div id="dispositivosWrap"></div>
+      <button
+        type="button"
+        onclick="agregarDispositivo()"
+        style="background: #ff0033"
+      >
+        + Agregar dispositivo
+      </button>
+
+      <label>Cartera</label>
+      <select id="cartera">
+        <option value="IN">IN</option>
+        <option value="OUT">OUT</option>
+      </select>
+
+      <label>Tipo de pago</label>
+      <select id="tipoPago">
+        <option value="transferencia">1 Pago - Transferencia</option>
+        <option value="tarjeta">1 Pago - Tarjeta de Crédito</option>
+        <option value="financiado">Financiado</option>
+      </select>
+
+      <div id="cuotasWrap" class="oculto">
+        <label>Cantidad de cuotas</label>
+        <select id="cuotas"></select>
+      </div>
+
+      <label>Operador</label>
+      <select id="operador"></select>
+
+      <label
+        style="display: flex; align-items: center; gap: 8px; margin-top: 14px"
+      >
+        <input type="checkbox" id="cobrado" style="width: auto" />
+        Ampliación ya abonada (Cobrado)
+      </label>
+
+      <button onclick="generar()">Generar Speech</button>
+    </div>
+
+    <div class="card">
+      <label>Resultado</label>
+      <div id="resultado" contenteditable="true">-</div>
+      <button class="copiar" onclick="copiar()">Copiar</button>
+    </div>
+
+  </body>
+
+<script type="module" src="main.js"></script>
+</html>
