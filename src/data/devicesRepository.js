@@ -37,11 +37,27 @@ function generarId(nombre) {
 export function getAll(linea) {
   const key = keyDe(linea);
   const guardado = getItem(key, null);
-  if (guardado !== null) return guardado;
+  if (guardado === null) {
+    const seed = SEEDS[linea];
+    setItem(key, seed);
+    return seed;
+  }
 
-  const seed = SEEDS[linea];
-  setItem(key, seed);
-  return seed;
+  // Migración: catálogos guardados antes de agregar el campo "mensual" no lo
+  // tienen. Se completa buscando el valor real en el catálogo fuente (por
+  // id); solo cae a null si el id no existe ahí (dispositivo agregado a
+  // mano desde el admin, sin equivalente en el seed original).
+  let migrado = false;
+  const catalogoFuente = SEEDS[linea];
+  const lista = guardado.map((item) => {
+    if ("mensual" in item) return item;
+    migrado = true;
+    const itemFuente = catalogoFuente.find((d) => d.id === item.id);
+    return { ...item, mensual: itemFuente ? itemFuente.mensual : null };
+  });
+  if (migrado) setItem(key, lista);
+
+  return lista;
 }
 
 export function add(linea, dispositivo) {
@@ -53,6 +69,7 @@ export function add(linea, dispositivo) {
     valorMedio: dispositivo.valorMedio ?? null,
     valorBajo: dispositivo.valorBajo ?? null,
     valorFinanciado: dispositivo.valorFinanciado ?? null,
+    mensual: dispositivo.mensual ?? null,
   };
 
   setItem(keyDe(linea), [...lista, nuevo]);

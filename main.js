@@ -176,6 +176,13 @@ import * as operatorsRepository from "./src/data/operatorsRepository.js";
           inputValor.value = (valorSinIva * 1.21).toFixed(2);
         }
 
+        // Autocompleta el adicional en la cuota (RMR) desde el catálogo.
+        // A diferencia del valor con IVA, el campo nunca se deshabilita: el
+        // operador puede cargar un adicional manual aunque el catálogo no
+        // tenga uno predefinido para este dispositivo.
+        const inputAdicional = el.querySelector(".disp-adicional");
+        inputAdicional.value = item && item.mensual != null ? item.mensual : "";
+
         calcularIva(id);
       }
 

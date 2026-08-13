@@ -6,7 +6,9 @@
 
     <link rel="stylesheet" href="../style.css" />
   </head>
-  <body>
+  <body data-theme="light">
+    <button id="themeToggle" aria-label="Cambiar tema">🌙</button>
+
     <h2>Admin - GeneratorUPS</h2>
     <p><a href="../index.html">&larr; Volver al formulario</a></p>
 
@@ -42,6 +44,10 @@
             <label>Valor Financiado</label>
             <input id="dispFinanciado" type="number" step="0.01" />
           </div>
+          <div>
+            <label>Mensual (adicional RMR)</label>
+            <input id="dispMensual" type="number" step="0.01" />
+          </div>
         </div>
 
         <button type="submit" id="dispSubmitBtn">Agregar dispositivo</button>
@@ -58,6 +64,7 @@
             <th>Medio</th>
             <th>Bajo</th>
             <th>Financiado</th>
+            <th>Mensual</th>
             <th></th>
           </tr>
         </thead>
@@ -96,5 +103,6 @@
     </div>
   </body>
 
+  <script type="module" src="../src/theme.js"></script>
   <script type="module" src="admin.js"></script>
 </html>

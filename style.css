@@ -1,17 +1,66 @@
+:root {
+  --bg: white;
+  --card-bg: #fff;
+  --text: #222;
+  --text-heading: #1a1a2e;
+  --input-bg: #fff;
+  --input-border: #ccc;
+  --resultado-bg: #eef1f5;
+  --dispositivo-bg: #fafbfc;
+  --dispositivo-border: #ddd;
+  --th-color: #4a5568;
+  --table-border: #e2e8f0;
+  --btn-bg: #ff0033;
+  --btn-hover: #245a94;
+  --btn-text: #fff;
+  --copiar-bg: cornflowerblue;
+  --copiar-hover: #276749;
+  --quitar-bg: #c53030;
+  --quitar-hover: #9b2c2c;
+  --editar-bg: #4a5568;
+  --secundario-bg: #718096;
+  --aviso-color: #c53030;
+}
+
+[data-theme="dark"] {
+  --bg: #15171c;
+  --card-bg: #1f232b;
+  --text: #e2e5ea;
+  --text-heading: #f0f2f5;
+  --input-bg: #2a2f3a;
+  --input-border: #3d4250;
+  --resultado-bg: #262b35;
+  --dispositivo-bg: #242832;
+  --dispositivo-border: #3d4250;
+  --th-color: #9aa3b2;
+  --table-border: #333846;
+  --btn-bg: #ff4d6d;
+  --btn-hover: #3a6ea8;
+  --btn-text: #fff;
+  --copiar-bg: #6495ed;
+  --copiar-hover: #2f7d57;
+  --quitar-bg: #e05353;
+  --quitar-hover: #c94444;
+  --editar-bg: #5a6478;
+  --secundario-bg: #7d8aa0;
+  --aviso-color: #ff8080;
+}
+
 body {
   font-family: Arial, sans-serif;
   max-width: 650px;
   margin: 30px auto;
   padding: 0 15px;
-  background: white;
-  color: #222;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.2s ease, color 0.2s ease;
 }
 h2 {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #1a1a2e;
+  color: var(--text-heading);
 }
 .card {
-  background: #fff;
+  background: var(--card-bg);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
@@ -28,10 +77,12 @@ select {
   width: 100%;
   padding: 8px;
   margin-top: 4px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
   border-radius: 6px;
   box-sizing: border-box;
   font-size: 14px;
+  background: var(--input-bg);
+  color: var(--text);
 }
 .row {
   display: flex;
@@ -48,8 +99,8 @@ select {
 }
 button {
   margin-top: 18px;
-  background: #ff0033;
-  color: #fff;
+  background: var(--btn-bg);
+  color: var(--btn-text);
   border: none;
   padding: 10px 18px;
   border-radius: 6px;
@@ -57,11 +108,12 @@ button {
   font-size: 14px;
 }
 button:hover {
-  background: #245a94;
+  background: var(--btn-hover);
 }
 #resultado {
   white-space: pre-wrap;
-  background: #eef1f5;
+  background: var(--resultado-bg);
+  color: var(--text);
   padding: 15px;
   border-radius: 8px;
   font-size: 14px;
@@ -72,34 +124,34 @@ button:hover {
   display: none;
 }
 .copiar {
-  background: cornflowerblue;
+  background: var(--copiar-bg);
   margin-left: 8px;
 }
 .copiar:hover {
-  background: #276749;
+  background: var(--copiar-hover);
 }
 .dispositivo-item {
-  border: 1px solid #ddd;
+  border: 1px solid var(--dispositivo-border);
   border-radius: 8px;
   padding: 12px;
   margin-top: 10px;
   position: relative;
-  background: #fafbfc;
+  background: var(--dispositivo-bg);
 }
 .dispositivo-item .quitar {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #c53030;
+  background: var(--quitar-bg);
   padding: 3px 9px;
   font-size: 12px;
   margin: 0;
 }
 .dispositivo-item .quitar:hover {
-  background: #9b2c2c;
+  background: var(--quitar-hover);
 }
 .disp-aviso {
-  color: #c53030;
+  color: var(--aviso-color);
   font-size: 13px;
   margin-top: 6px;
 }
@@ -113,10 +165,10 @@ th,
 td {
   text-align: left;
   padding: 8px 6px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--table-border);
 }
 th {
-  color: #4a5568;
+  color: var(--th-color);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -126,9 +178,32 @@ table button {
   font-size: 12px;
 }
 table .editar {
-  background: #4a5568;
+  background: var(--editar-bg);
 }
 button.secundario {
-  background: #718096;
+  background: var(--secundario-bg);
   margin-left: 8px;
+}
+#themeToggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+#themeToggle:hover {
+  background: var(--card-bg);
+  opacity: 0.85;
 }

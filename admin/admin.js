@@ -11,6 +11,7 @@ const dispAlto = document.getElementById("dispAlto");
 const dispMedio = document.getElementById("dispMedio");
 const dispBajo = document.getElementById("dispBajo");
 const dispFinanciado = document.getElementById("dispFinanciado");
+const dispMensual = document.getElementById("dispMensual");
 const dispSubmitBtn = document.getElementById("dispSubmitBtn");
 const dispCancelarBtn = document.getElementById("dispCancelarBtn");
 const tablaDispositivosBody = document.querySelector("#tablaDispositivos tbody");
@@ -35,6 +36,7 @@ function cargarDispositivoEnForm(item) {
   dispMedio.value = item.valorMedio ?? "";
   dispBajo.value = item.valorBajo ?? "";
   dispFinanciado.value = item.valorFinanciado ?? "";
+  dispMensual.value = item.mensual ?? "";
   dispSubmitBtn.textContent = "Guardar cambios";
   dispCancelarBtn.classList.remove("oculto");
 }
@@ -52,6 +54,7 @@ function renderDispositivos() {
       <td>${item.valorMedio ?? "-"}</td>
       <td>${item.valorBajo ?? "-"}</td>
       <td>${item.valorFinanciado ?? "-"}</td>
+      <td>${item.mensual ?? "-"}</td>
       <td>
         <button type="button" class="editar">Editar</button>
         <button type="button" class="eliminar quitar">Eliminar</button>
@@ -78,6 +81,7 @@ formDispositivo.addEventListener("submit", (e) => {
     valorMedio: parseValorOpcional(dispMedio.value),
     valorBajo: parseValorOpcional(dispBajo.value),
     valorFinanciado: parseValorOpcional(dispFinanciado.value),
+    mensual: parseValorOpcional(dispMensual.value),
   };
 
   if (!datos.nombre) {
