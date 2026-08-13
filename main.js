@@ -262,13 +262,13 @@ import * as operatorsRepository from "./src/data/operatorsRepository.js";
         if (tipoPago === "transferencia") {
           texto = `${prefijo} ${dispositivosTexto} (Adicional en la cuota: $${adicional}). Todo en 1 pago con transferencia. TT recibirá al técnico en el domicilio.-${operador.nombre} -Mtr_ ${operador.matricula}.`;
         } else if (tipoPago === "tarjeta") {
-          texto = `${prefijo}   ${dispositivosTexto} (Adicional en la cuota: $${adicional}). Todo en 1 pago con TC Visa/MasterCard. TT recibirá al técnico en el domicilio.-${operador.nombre} -Mtr_ ${operador.matricula}.`;
+          texto = `${prefijo} ${dispositivosTexto} (Adicional en la cuota: $${adicional}). Todo en 1 pago con TC Visa/MasterCard. TT recibirá al técnico en el domicilio.-${operador.nombre} -Mtr_ ${operador.matricula}.`;
         } else {
           texto = `${prefijo} ${dispositivosTexto} (Adicional en la cuota: $${adicional}). Todo en ${cuotas} cuotas con tarjeta de crédito visa/MasterCard Bancaria. TT recibirá al técnico en el domicilio.-${operador.nombre} -Mtr_ ${operador.matricula}.`;
         }
 
         if (cobrado) {
-          texto = `***NO COBRAR AMPLIACIÓN YA ABONADA***${texto}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+          texto = `***NO COBRAR AMPLIACIÓN YA ABONADA*** COLOCAR ESTE IMPORTE EN EL PARTE DIGITAL${texto}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
         }
 
         document.getElementById("resultado").textContent = texto;
