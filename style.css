@@ -55,6 +55,9 @@ body {
   color: var(--text);
   transition: background 0.2s ease, color 0.2s ease;
 }
+body.admin-page {
+  max-width: 1100px;
+}
 h2 {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text-heading);
@@ -90,6 +93,27 @@ select {
 }
 .row > div {
   flex: 1;
+}
+.campo-grupo {
+  border: 1px solid var(--dispositivo-border);
+  border-radius: 8px;
+  padding: 12px 14px 4px;
+  margin: 16px 0 0;
+}
+.campo-grupo legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--th-color);
+}
+.grid-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 14px;
+}
+.grid-campos label {
+  margin-top: 0;
 }
 .radio-group label {
   font-weight: 400;
@@ -179,6 +203,22 @@ table button {
 }
 table .editar {
   background: var(--editar-bg);
+}
+.tabla-scroll {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+.tabla-scroll table {
+  margin-top: 0;
+}
+#tablaDispositivos th,
+#tablaDispositivos td {
+  padding: 6px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+#tablaDispositivos th.col-narrow {
+  width: 64px;
 }
 button.secundario {
   background: var(--secundario-bg);

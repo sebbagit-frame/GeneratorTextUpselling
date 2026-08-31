@@ -6,7 +6,7 @@
 
     <link rel="stylesheet" href="../style.css" />
   </head>
-  <body data-theme="light">
+  <body data-theme="light" class="admin-page">
     <button id="themeToggle" aria-label="Cambiar tema">🌙</button>
 
     <h2>Admin - GeneratorUPS</h2>
@@ -53,56 +53,71 @@
         <label>Nombre</label>
         <input id="dispNombre" required />
 
-        <div class="row">
-          <div>
-            <label>Valor Alto</label>
-            <input id="dispAlto" type="number" step="0.01" />
+        <fieldset class="campo-grupo">
+          <legend>Precios por nivel</legend>
+          <div class="grid-campos">
+            <div>
+              <label>Valor Alto</label>
+              <input id="dispAlto" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Valor Medio</label>
+              <input id="dispMedio" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Valor Bajo</label>
+              <input id="dispBajo" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Valor Financiado</label>
+              <input id="dispFinanciado" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Promo 50%</label>
+              <input id="dispPromoCincuenta" type="number" step="0.01" />
+            </div>
           </div>
-          <div>
-            <label>Valor Medio</label>
-            <input id="dispMedio" type="number" step="0.01" />
+        </fieldset>
+
+        <fieldset class="campo-grupo">
+          <legend>Adicional mensual</legend>
+          <div class="grid-campos">
+            <div>
+              <label>Mensual (RMR)</label>
+              <input id="dispMensual" type="number" step="0.01" />
+            </div>
           </div>
-          <div>
-            <label>Valor Bajo</label>
-            <input id="dispBajo" type="number" step="0.01" />
+        </fieldset>
+
+        <fieldset class="campo-grupo">
+          <legend>RMR por plazo (solo cámaras Arlo)</legend>
+          <div class="grid-campos">
+            <div>
+              <label>RMR 3 días</label>
+              <input id="dispRmr3dias" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>RMR 7 días</label>
+              <input id="dispRmr7dias" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>RMR 14 días</label>
+              <input id="dispRmr14dias" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>RMR 30 días</label>
+              <input id="dispRmr30dias" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Tipo de plan</label>
+              <select id="dispTipoPlan">
+                <option value="">-</option>
+                <option value="SMART">SMART</option>
+                <option value="CVR">CVR</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label>Valor Financiado</label>
-            <input id="dispFinanciado" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>Promo 50%</label>
-            <input id="dispPromoCincuenta" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>Mensual (adicional RMR)</label>
-            <input id="dispMensual" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>RMR 3 días (Arlo)</label>
-            <input id="dispRmr3dias" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>RMR 7 días (Arlo)</label>
-            <input id="dispRmr7dias" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>RMR 14 días (Arlo)</label>
-            <input id="dispRmr14dias" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>RMR 30 días (Arlo)</label>
-            <input id="dispRmr30dias" type="number" step="0.01" />
-          </div>
-          <div>
-            <label>Tipo de plan (Arlo)</label>
-            <select id="dispTipoPlan">
-              <option value="">-</option>
-              <option value="SMART">SMART</option>
-              <option value="CVR">CVR</option>
-            </select>
-          </div>
-        </div>
+        </fieldset>
 
         <button type="submit" id="dispSubmitBtn">Agregar dispositivo</button>
         <button type="button" id="dispCancelarBtn" class="secundario oculto">
@@ -110,26 +125,28 @@
         </button>
       </form>
 
-      <table id="tablaDispositivos">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Alto</th>
-            <th>Medio</th>
-            <th>Bajo</th>
-            <th>Financiado</th>
-            <th>Promo 50%</th>
-            <th>Mensual</th>
-            <th>RMR 3d</th>
-            <th>RMR 7d</th>
-            <th>RMR 14d</th>
-            <th>RMR 30d</th>
-            <th>Plan</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="tabla-scroll">
+        <table id="tablaDispositivos">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Alto</th>
+              <th>Medio</th>
+              <th>Bajo</th>
+              <th>Financiado</th>
+              <th>Promo 50%</th>
+              <th>Mensual</th>
+              <th class="col-narrow">RMR 3d</th>
+              <th class="col-narrow">RMR 7d</th>
+              <th class="col-narrow">RMR 14d</th>
+              <th class="col-narrow">RMR 30d</th>
+              <th class="col-narrow">Plan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="card">
