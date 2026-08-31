@@ -1,5 +1,89 @@
 import * as devicesRepository from "../src/data/devicesRepository.js";
 import * as operatorsRepository from "../src/data/operatorsRepository.js";
+import { API_BASE_URL } from "../src/data/apiConfig.js";
+import { getToken, setToken, clearToken } from "../src/data/authHeader.js";
+
+// ==================== SESIÓN / LOGIN ====================
+
+const loginView = document.getElementById("loginView");
+const adminView = document.getElementById("adminView");
+const formLogin = document.getElementById("formLogin");
+const loginUsuario = document.getElementById("loginUsuario");
+const loginPassword = document.getElementById("loginPassword");
+const loginError = document.getElementById("loginError");
+const logoutBtn = document.getElementById("logoutBtn");
+
+function mostrarLogin(mensaje) {
+  clearToken();
+  adminView.classList.add("oculto");
+  loginView.classList.remove("oculto");
+  if (mensaje) {
+    loginError.textContent = mensaje;
+    loginError.classList.remove("oculto");
+  } else {
+    loginError.classList.add("oculto");
+  }
+}
+
+async function mostrarAdmin() {
+  loginView.classList.add("oculto");
+  adminView.classList.remove("oculto");
+  await renderDispositivos();
+  await renderOperadores();
+}
+
+// Envuelve las llamadas a los repositorios: si el error viene de un 401
+// (token vencido o inválido), fuerza el logout y muestra el mensaje de
+// sesión expirada; cualquier otro error se re-lanza para que lo maneje
+// quien llamó (típicamente un alert puntual).
+async function conManejoDeAuth(fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err.status === 401) {
+      mostrarLogin("Tu sesión expiró, iniciá sesión de nuevo");
+      return undefined;
+    }
+    throw err;
+  }
+}
+
+formLogin.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginError.classList.add("oculto");
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        usuario: loginUsuario.value.trim(),
+        password: loginPassword.value,
+      }),
+    });
+  } catch {
+    loginError.textContent =
+      "No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.";
+    loginError.classList.remove("oculto");
+    return;
+  }
+
+  if (!res.ok) {
+    loginError.textContent = "Usuario o contraseña incorrectos";
+    loginError.classList.remove("oculto");
+    return;
+  }
+
+  const data = await res.json();
+  setToken(data.token);
+  formLogin.reset();
+  await mostrarAdmin();
+});
+
+logoutBtn.addEventListener("click", () => {
+  mostrarLogin();
+});
 
 // ==================== DISPOSITIVOS ====================
 
@@ -11,7 +95,13 @@ const dispAlto = document.getElementById("dispAlto");
 const dispMedio = document.getElementById("dispMedio");
 const dispBajo = document.getElementById("dispBajo");
 const dispFinanciado = document.getElementById("dispFinanciado");
+const dispPromoCincuenta = document.getElementById("dispPromoCincuenta");
 const dispMensual = document.getElementById("dispMensual");
+const dispRmr3dias = document.getElementById("dispRmr3dias");
+const dispRmr7dias = document.getElementById("dispRmr7dias");
+const dispRmr14dias = document.getElementById("dispRmr14dias");
+const dispRmr30dias = document.getElementById("dispRmr30dias");
+const dispTipoPlan = document.getElementById("dispTipoPlan");
 const dispSubmitBtn = document.getElementById("dispSubmitBtn");
 const dispCancelarBtn = document.getElementById("dispCancelarBtn");
 const tablaDispositivosBody = document.querySelector("#tablaDispositivos tbody");
@@ -36,14 +126,28 @@ function cargarDispositivoEnForm(item) {
   dispMedio.value = item.valorMedio ?? "";
   dispBajo.value = item.valorBajo ?? "";
   dispFinanciado.value = item.valorFinanciado ?? "";
+  dispPromoCincuenta.value = item.valorPromoCincuenta ?? "";
   dispMensual.value = item.mensual ?? "";
+  dispRmr3dias.value = item.rmr3dias ?? "";
+  dispRmr7dias.value = item.rmr7dias ?? "";
+  dispRmr14dias.value = item.rmr14dias ?? "";
+  dispRmr30dias.value = item.rmr30dias ?? "";
+  dispTipoPlan.value = item.tipoPlan ?? "";
   dispSubmitBtn.textContent = "Guardar cambios";
   dispCancelarBtn.classList.remove("oculto");
 }
 
-function renderDispositivos() {
+async function renderDispositivos() {
   const linea = selLinea.value;
-  const lista = devicesRepository.getAll(linea);
+
+  let lista;
+  try {
+    lista = await devicesRepository.getAll(linea);
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
   tablaDispositivosBody.innerHTML = "";
 
   lista.forEach((item) => {
@@ -54,7 +158,13 @@ function renderDispositivos() {
       <td>${item.valorMedio ?? "-"}</td>
       <td>${item.valorBajo ?? "-"}</td>
       <td>${item.valorFinanciado ?? "-"}</td>
+      <td>${item.valorPromoCincuenta ?? "-"}</td>
       <td>${item.mensual ?? "-"}</td>
+      <td>${item.rmr3dias ?? "-"}</td>
+      <td>${item.rmr7dias ?? "-"}</td>
+      <td>${item.rmr14dias ?? "-"}</td>
+      <td>${item.rmr30dias ?? "-"}</td>
+      <td>${item.tipoPlan ?? "-"}</td>
       <td>
         <button type="button" class="editar">Editar</button>
         <button type="button" class="eliminar quitar">Eliminar</button>
@@ -63,16 +173,21 @@ function renderDispositivos() {
     tr.querySelector(".editar").addEventListener("click", () =>
       cargarDispositivoEnForm(item),
     );
-    tr.querySelector(".eliminar").addEventListener("click", () => {
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
       if (!confirm(`¿Eliminar "${item.nombre}"?`)) return;
-      devicesRepository.remove(linea, item.id);
-      renderDispositivos();
+      try {
+        await conManejoDeAuth(() => devicesRepository.remove(linea, item.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderDispositivos();
     });
     tablaDispositivosBody.appendChild(tr);
   });
 }
 
-formDispositivo.addEventListener("submit", (e) => {
+formDispositivo.addEventListener("submit", async (e) => {
   e.preventDefault();
   const linea = selLinea.value;
   const datos = {
@@ -81,7 +196,13 @@ formDispositivo.addEventListener("submit", (e) => {
     valorMedio: parseValorOpcional(dispMedio.value),
     valorBajo: parseValorOpcional(dispBajo.value),
     valorFinanciado: parseValorOpcional(dispFinanciado.value),
+    valorPromoCincuenta: parseValorOpcional(dispPromoCincuenta.value),
     mensual: parseValorOpcional(dispMensual.value),
+    rmr3dias: parseValorOpcional(dispRmr3dias.value),
+    rmr7dias: parseValorOpcional(dispRmr7dias.value),
+    rmr14dias: parseValorOpcional(dispRmr14dias.value),
+    rmr30dias: parseValorOpcional(dispRmr30dias.value),
+    tipoPlan: dispTipoPlan.value || null,
   };
 
   if (!datos.nombre) {
@@ -89,31 +210,34 @@ formDispositivo.addEventListener("submit", (e) => {
     return;
   }
 
-  if (dispEditId.value) {
-    devicesRepository.update(linea, dispEditId.value, datos);
-  } else {
-    devicesRepository.add(linea, datos);
+  try {
+    if (dispEditId.value) {
+      await conManejoDeAuth(() =>
+        devicesRepository.update(linea, dispEditId.value, datos),
+      );
+    } else {
+      await conManejoDeAuth(() => devicesRepository.add(linea, datos));
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
   }
 
   limpiarFormDispositivo();
-  renderDispositivos();
+  await renderDispositivos();
 });
 
 dispCancelarBtn.addEventListener("click", limpiarFormDispositivo);
 
-selLinea.addEventListener("change", () => {
+selLinea.addEventListener("change", async () => {
   limpiarFormDispositivo();
-  renderDispositivos();
+  await renderDispositivos();
 });
-
-renderDispositivos();
 
 // ==================== OPERADORES ====================
 
 const formOperador = document.getElementById("formOperador");
-const opEditMatriculaOriginal = document.getElementById(
-  "opEditMatriculaOriginal",
-);
+const opEditId = document.getElementById("opEditId");
 const opNombre = document.getElementById("opNombre");
 const opMatricula = document.getElementById("opMatricula");
 const opSubmitBtn = document.getElementById("opSubmitBtn");
@@ -121,22 +245,29 @@ const opCancelarBtn = document.getElementById("opCancelarBtn");
 const tablaOperadoresBody = document.querySelector("#tablaOperadores tbody");
 
 function limpiarFormOperador() {
-  opEditMatriculaOriginal.value = "";
+  opEditId.value = "";
   formOperador.reset();
   opSubmitBtn.textContent = "Agregar operador";
   opCancelarBtn.classList.add("oculto");
 }
 
 function cargarOperadorEnForm(op) {
-  opEditMatriculaOriginal.value = op.matricula;
+  opEditId.value = op.id;
   opNombre.value = op.nombre;
   opMatricula.value = op.matricula;
   opSubmitBtn.textContent = "Guardar cambios";
   opCancelarBtn.classList.remove("oculto");
 }
 
-function renderOperadores() {
-  const lista = operatorsRepository.getAll();
+async function renderOperadores() {
+  let lista;
+  try {
+    lista = await operatorsRepository.getAll();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
   tablaOperadoresBody.innerHTML = "";
 
   lista.forEach((op) => {
@@ -152,16 +283,21 @@ function renderOperadores() {
     tr.querySelector(".editar").addEventListener("click", () =>
       cargarOperadorEnForm(op),
     );
-    tr.querySelector(".eliminar").addEventListener("click", () => {
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
       if (!confirm(`¿Eliminar a "${op.nombre}"?`)) return;
-      operatorsRepository.remove(op.matricula);
-      renderOperadores();
+      try {
+        await conManejoDeAuth(() => operatorsRepository.remove(op.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderOperadores();
     });
     tablaOperadoresBody.appendChild(tr);
   });
 }
 
-formOperador.addEventListener("submit", (e) => {
+formOperador.addEventListener("submit", async (e) => {
   e.preventDefault();
   const nombre = opNombre.value.trim();
   const matricula = opMatricula.value.trim();
@@ -172,16 +308,17 @@ formOperador.addEventListener("submit", (e) => {
   }
 
   try {
-    if (opEditMatriculaOriginal.value) {
-      operatorsRepository.update(opEditMatriculaOriginal.value, {
-        nombre,
-        matricula,
-      });
+    if (opEditId.value) {
+      await conManejoDeAuth(() =>
+        operatorsRepository.update(opEditId.value, { nombre, matricula }),
+      );
     } else {
-      operatorsRepository.add({ nombre, matricula });
+      await conManejoDeAuth(() =>
+        operatorsRepository.add({ nombre, matricula }),
+      );
     }
     limpiarFormOperador();
-    renderOperadores();
+    await renderOperadores();
   } catch (err) {
     alert(err.message);
   }
@@ -189,4 +326,10 @@ formOperador.addEventListener("submit", (e) => {
 
 opCancelarBtn.addEventListener("click", limpiarFormOperador);
 
-renderOperadores();
+// ==================== INICIO ====================
+
+if (getToken()) {
+  mostrarAdmin();
+} else {
+  mostrarLogin();
+}

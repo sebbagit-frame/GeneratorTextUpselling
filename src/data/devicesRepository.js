@@ -1,93 +1,75 @@
-import { getItem, setItem } from "./storage.js";
-import {
-  CATALOGO_DISPOSITIVOS,
-  CATALOGO_DISPOSITIVOS_PRESENSE,
-} from "./catalogoDispositivos.js";
+import { API_BASE_URL } from "./apiConfig.js";
+import { getAuthHeader } from "./authHeader.js";
 
-const KEYS = {
-  verisure: "generatorups_dispositivos_verisure",
-  presense: "generatorups_dispositivos_presense",
-};
+// Todas las lecturas/escrituras de dispositivos van contra el backend. Ya no
+// hay localStorage ni catálogos hardcodeados acá: la fuente de verdad es la
+// API.
 
-const SEEDS = {
-  verisure: CATALOGO_DISPOSITIVOS,
-  presense: CATALOGO_DISPOSITIVOS_PRESENSE,
-};
-
-function keyDe(linea) {
-  const key = KEYS[linea];
-  if (!key) throw new Error(`Línea de dispositivos desconocida: ${linea}`);
-  return key;
+// Arma un Error enriquecido con el status HTTP, para que quien llama pueda
+// distinguir un 401 (token vencido) de cualquier otro fallo.
+function errorConStatus(mensaje, status) {
+  const err = new Error(mensaje);
+  err.status = status;
+  return err;
 }
 
-// Slug del nombre + timestamp, para no depender de que el admin tipee un id
-function generarId(nombre) {
-  const slug = (nombre || "dispositivo")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return `${slug}_${Date.now()}`;
-}
-
-// Lee el catálogo de una línea desde localStorage. La primera vez que se
-// pide una línea sin datos guardados, siembra con el catálogo hardcodeado
-// y lo persiste, para que las siguientes lecturas ya vengan de ahí.
-export function getAll(linea) {
-  const key = keyDe(linea);
-  const guardado = getItem(key, null);
-  if (guardado === null) {
-    const seed = SEEDS[linea];
-    setItem(key, seed);
-    return seed;
+async function fetchJson(url, options) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch {
+    throw errorConStatus(
+      "No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.",
+      null,
+    );
   }
 
-  // Migración: catálogos guardados antes de agregar el campo "mensual" no lo
-  // tienen. Se completa buscando el valor real en el catálogo fuente (por
-  // id); solo cae a null si el id no existe ahí (dispositivo agregado a
-  // mano desde el admin, sin equivalente en el seed original).
-  let migrado = false;
-  const catalogoFuente = SEEDS[linea];
-  const lista = guardado.map((item) => {
-    if ("mensual" in item) return item;
-    migrado = true;
-    const itemFuente = catalogoFuente.find((d) => d.id === item.id);
-    return { ...item, mensual: itemFuente ? itemFuente.mensual : null };
+  if (!res.ok) {
+    let mensaje = `Error del servidor (${res.status}).`;
+    try {
+      const body = await res.json();
+      if (body && body.message) mensaje = body.message;
+    } catch {
+      // sin body JSON, se usa el mensaje genérico
+    }
+    throw errorConStatus(mensaje, res.status);
+  }
+
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+export async function getAll(linea) {
+  return fetchJson(
+    `${API_BASE_URL}/dispositivos?linea=${encodeURIComponent(linea)}`,
+  );
+}
+
+export async function add(linea, dispositivo) {
+  return fetchJson(`${API_BASE_URL}/dispositivos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ linea, ...dispositivo }),
   });
-  if (migrado) setItem(key, lista);
-
-  return lista;
 }
 
-export function add(linea, dispositivo) {
-  const lista = getAll(linea);
-  const nuevo = {
-    id: dispositivo.id || generarId(dispositivo.nombre),
-    nombre: dispositivo.nombre,
-    valorAlto: dispositivo.valorAlto ?? null,
-    valorMedio: dispositivo.valorMedio ?? null,
-    valorBajo: dispositivo.valorBajo ?? null,
-    valorFinanciado: dispositivo.valorFinanciado ?? null,
-    mensual: dispositivo.mensual ?? null,
-  };
-
-  setItem(keyDe(linea), [...lista, nuevo]);
-  return nuevo;
+export async function update(linea, id, cambios) {
+  return fetchJson(`${API_BASE_URL}/dispositivos/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ linea, ...cambios }),
+  });
 }
 
-export function update(linea, id, cambios) {
-  const lista = getAll(linea);
-  const actualizada = lista.map((item) =>
-    item.id === id ? { ...item, ...cambios } : item,
-  );
-  setItem(keyDe(linea), actualizada);
-}
-
-export function remove(linea, id) {
-  const lista = getAll(linea);
-  setItem(
-    keyDe(linea),
-    lista.filter((item) => item.id !== id),
-  );
+export async function remove(linea, id) {
+  return fetchJson(`${API_BASE_URL}/dispositivos/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
 }
