@@ -58,10 +58,8 @@ async function cargarCampanas() {
 selCartera.addEventListener("change", cargarCampanas);
 
 function formatoMoneda(num) {
-  return num.toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const truncado = Math.trunc(num);
+  return truncado.toLocaleString("es-AR");
 }
 
 // Convierte el valor de un <input type="date"> (yyyy-mm-dd) a "DD/MM" para
