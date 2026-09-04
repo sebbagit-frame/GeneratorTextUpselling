@@ -79,7 +79,8 @@ label {
   font-size: 14px;
 }
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 8px;
   margin-top: 4px;
@@ -137,7 +138,8 @@ button {
 button:hover {
   background: var(--btn-hover);
 }
-#resultado {
+#resultado,
+#resultadoComLog {
   white-space: pre-wrap;
   background: var(--resultado-bg);
   color: var(--text);
@@ -222,6 +224,12 @@ table .editar {
 }
 #tablaDispositivos th.col-narrow {
   width: 64px;
+}
+.td-truncate {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* La columna de acciones (Editar/Eliminar) queda pegada al borde derecho
    mientras se scrollea horizontalmente, para que nunca quede cortada fuera

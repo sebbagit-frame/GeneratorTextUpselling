@@ -1,10 +1,17 @@
 import * as devicesRepository from "./src/data/devicesRepository.js";
 import * as operatorsRepository from "./src/data/operatorsRepository.js";
+import * as campanasRepository from "./src/data/campanasRepository.js";
 
 // ---- OPERADORES (desde el backend) ----
 let OPERADORES = [];
 
+// ---- CAMPAÑAS (desde el backend, dependen de la cartera elegida) ----
+let CAMPANAS = [];
+const campanasCache = {};
+
 const selOperador = document.getElementById("operador");
+const selCampana = document.getElementById("campana");
+const selCartera = document.getElementById("cartera");
 
 // Cargar cuotas 3 a 12
 const selCuotas = document.getElementById("cuotas");
@@ -24,11 +31,45 @@ document.getElementById("tipoPago").addEventListener("change", (e) => {
     .classList.toggle("oculto", e.target.value !== "financiado");
 });
 
+// Repuebla el select de Campaña según la cartera elegida (mismo patrón que
+// Línea→Dispositivo).
+async function cargarCampanas() {
+  const cartera = selCartera.value;
+
+  if (!campanasCache[cartera]) {
+    try {
+      campanasCache[cartera] = await campanasRepository.getAll(cartera);
+    } catch (err) {
+      alert(err.message);
+      campanasCache[cartera] = [];
+    }
+  }
+
+  CAMPANAS = campanasCache[cartera];
+  selCampana.innerHTML = "";
+  CAMPANAS.forEach((campana, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = campana.nombre;
+    selCampana.appendChild(opt);
+  });
+}
+
+selCartera.addEventListener("change", cargarCampanas);
+
 function formatoMoneda(num) {
   return num.toLocaleString("es-AR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+// Convierte el valor de un <input type="date"> (yyyy-mm-dd) a "DD/MM" para
+// mostrar en el speech de ComLog. Si no se completó, devuelve "-".
+function formatearFecha(fechaISO) {
+  if (!fechaISO) return "-";
+  const [, mm, dd] = fechaISO.split("-");
+  return `${dd}/${mm}`;
 }
 
 // ---- Dispositivos múltiples ----
@@ -314,6 +355,11 @@ async function generar() {
 
   const bloques = [];
 
+  // ---- ComLog: se arma en paralelo al texto de Mantenimiento, agrupando
+  // los dispositivos por nombre (no por fila). ----
+  const gruposComLog = new Map();
+  let esAbonado = false;
+
   for (const [index, el] of items.entries()) {
     const item = await obtenerItemCatalogo(el);
     const nombre = item ? item.nombre : "";
@@ -326,6 +372,22 @@ async function generar() {
     const totalConIva = valConIva * cantidad;
     const totalSinIva = totalConIva / 1.21;
     const adicionalItem = adicional * cantidad;
+
+    // Acumula por nombre de dispositivo para el speech de ComLog (que agrupa
+    // filas repetidas), y detecta si alguna fila está marcada como abonada.
+    const grupo = gruposComLog.get(nombre) || {
+      cantidad: 0,
+      sumaConIva: 0,
+      sumaAdicional: 0,
+    };
+    grupo.cantidad += cantidad;
+    grupo.sumaConIva += totalConIva;
+    grupo.sumaAdicional += adicionalItem;
+    gruposComLog.set(nombre, grupo);
+
+    if (el.querySelector(".disp-cobrado").checked) {
+      esAbonado = true;
+    }
 
     // Adicional (RMR) + plan de las cámaras Arlo, ahora por dispositivo en
     // vez de acumulado en un total global.
@@ -352,10 +414,38 @@ async function generar() {
   const texto = `${prefijo} ${bloques.join(" // ")}`;
 
   document.getElementById("resultado").textContent = texto;
+
+  // ---- Armado del texto de ComLog ----
+  const campana = CAMPANAS[selCampana.value];
+  const lineasDispositivos = Array.from(gruposComLog.entries())
+    .map(
+      ([nombreGrupo, grupo]) =>
+        `Ampliación de ${grupo.cantidad} ${nombreGrupo} valor final: $${formatoMoneda(grupo.sumaConIva)} adicional mensual: $${formatoMoneda(grupo.sumaAdicional)}`,
+    )
+    .join("\n");
+
+  const fechaFormateada = formatearFecha(
+    document.getElementById("fechaVisita").value,
+  );
+  const horaDesde = document.getElementById("horaDesde").value || "-";
+  const horaHasta = document.getElementById("horaHasta").value || "-";
+  const comentarios =
+    document.getElementById("comentariosAdicionales").value || "-";
+
+  const textoComLog = campana
+    ? `${prefijo} ${campana.textoApertura}\n\n${lineasDispositivos}\nSe pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${esAbonado ? ", Ya abonado" : ""}.\n\nComentarios adicionales: ${comentarios}`
+    : "-";
+
+  document.getElementById("resultadoComLog").textContent = textoComLog;
 }
 
 function copiar() {
   const texto = document.getElementById("resultado").textContent;
+  navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
+}
+
+function copiarComLog() {
+  const texto = document.getElementById("resultadoComLog").textContent;
   navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
 }
 
@@ -368,6 +458,7 @@ window.onCambioSeleccion = onCambioSeleccion;
 window.calcularIva = calcularIva;
 window.generar = generar;
 window.copiar = copiar;
+window.copiarComLog = copiarComLog;
 
 // ---- Carga inicial ----
 async function init() {
@@ -387,6 +478,8 @@ async function init() {
     selOperador.appendChild(opt);
   });
   setCargando(false);
+
+  await cargarCampanas();
 
   // Cargar el primer dispositivo por defecto
   await agregarDispositivo();

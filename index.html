@@ -39,13 +39,40 @@
       <label>Operador</label>
       <select id="operador"></select>
 
+      <label>Campaña</label>
+      <select id="campana"></select>
+
+      <div class="row">
+        <div>
+          <label>Fecha de visita</label>
+          <input type="date" id="fechaVisita">
+        </div>
+        <div>
+          <label>Hora desde</label>
+          <input type="time" id="horaDesde">
+        </div>
+        <div>
+          <label>Hora hasta</label>
+          <input type="time" id="horaHasta">
+        </div>
+      </div>
+
+      <label>Comentarios adicionales</label>
+      <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
+
       <button onclick="generar()">Generar Speech</button>
     </div>
 
     <div class="card">
-      <label>Resultado</label>
+      <label>Resultado Mantenimiento</label>
       <div id="resultado" contenteditable="true">-</div>
       <button class="copiar" onclick="copiar()">Copiar</button>
+    </div>
+
+    <div class="card">
+      <label>Resultado ComLog</label>
+      <div id="resultadoComLog" contenteditable="true">-</div>
+      <button class="copiar" onclick="copiarComLog()">Copiar</button>
     </div>
 
   </body>

@@ -178,6 +178,51 @@
         <tbody></tbody>
       </table>
       </div>
+
+      <div class="card">
+        <h3>Campañas</h3>
+
+        <label>Cartera</label>
+        <select id="campCarteraFiltro">
+          <option value="IN">IN</option>
+          <option value="OUT">OUT</option>
+        </select>
+
+        <form id="formCampana">
+          <input type="hidden" id="campEditId" />
+
+          <label>Nombre</label>
+          <input id="campNombre" required />
+
+          <label>Cartera</label>
+          <select id="campCartera">
+            <option value="IN">IN</option>
+            <option value="OUT">OUT</option>
+          </select>
+
+          <label>Texto de apertura</label>
+          <textarea id="campTextoApertura" required></textarea>
+
+          <button type="submit" id="campSubmitBtn">Agregar campaña</button>
+          <button type="button" id="campCancelarBtn" class="secundario oculto">
+            Cancelar edición
+          </button>
+        </form>
+
+        <div class="tabla-scroll">
+          <table id="tablaCampanas">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Cartera</th>
+                <th>Texto de apertura</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </body>
 

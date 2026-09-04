@@ -1,5 +1,6 @@
 import * as devicesRepository from "../src/data/devicesRepository.js";
 import * as operatorsRepository from "../src/data/operatorsRepository.js";
+import * as campanasRepository from "../src/data/campanasRepository.js";
 import { API_BASE_URL } from "../src/data/apiConfig.js";
 import { getToken, setToken, clearToken } from "../src/data/authHeader.js";
 
@@ -30,6 +31,7 @@ async function mostrarAdmin() {
   adminView.classList.remove("oculto");
   await renderDispositivos();
   await renderOperadores();
+  await renderCampanas();
 }
 
 // Envuelve las llamadas a los repositorios: si el error viene de un 401
@@ -325,6 +327,112 @@ formOperador.addEventListener("submit", async (e) => {
 });
 
 opCancelarBtn.addEventListener("click", limpiarFormOperador);
+
+// ==================== CAMPAÑAS ====================
+
+const campCarteraFiltro = document.getElementById("campCarteraFiltro");
+const formCampana = document.getElementById("formCampana");
+const campEditId = document.getElementById("campEditId");
+const campNombre = document.getElementById("campNombre");
+const campCartera = document.getElementById("campCartera");
+const campTextoApertura = document.getElementById("campTextoApertura");
+const campSubmitBtn = document.getElementById("campSubmitBtn");
+const campCancelarBtn = document.getElementById("campCancelarBtn");
+const tablaCampanasBody = document.querySelector("#tablaCampanas tbody");
+
+function limpiarFormCampana() {
+  campEditId.value = "";
+  formCampana.reset();
+  campSubmitBtn.textContent = "Agregar campaña";
+  campCancelarBtn.classList.add("oculto");
+}
+
+function cargarCampanaEnForm(campana) {
+  campEditId.value = campana.id;
+  campNombre.value = campana.nombre;
+  campCartera.value = campana.cartera;
+  campTextoApertura.value = campana.textoApertura;
+  campSubmitBtn.textContent = "Guardar cambios";
+  campCancelarBtn.classList.remove("oculto");
+}
+
+async function renderCampanas() {
+  const cartera = campCarteraFiltro.value;
+
+  let lista;
+  try {
+    lista = await campanasRepository.getAll(cartera);
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  tablaCampanasBody.innerHTML = "";
+
+  lista.forEach((campana) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${campana.nombre}</td>
+      <td>${campana.cartera}</td>
+      <td class="td-truncate" title="${campana.textoApertura}">${campana.textoApertura}</td>
+      <td>
+        <button type="button" class="editar">Editar</button>
+        <button type="button" class="eliminar quitar">Eliminar</button>
+      </td>
+    `;
+    tr.querySelector(".editar").addEventListener("click", () =>
+      cargarCampanaEnForm(campana),
+    );
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
+      if (!confirm(`¿Eliminar "${campana.nombre}"?`)) return;
+      try {
+        await conManejoDeAuth(() => campanasRepository.remove(campana.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderCampanas();
+    });
+    tablaCampanasBody.appendChild(tr);
+  });
+}
+
+formCampana.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const datos = {
+    nombre: campNombre.value.trim(),
+    cartera: campCartera.value,
+    textoApertura: campTextoApertura.value.trim(),
+  };
+
+  if (!datos.nombre || !datos.textoApertura) {
+    alert("Nombre y texto de apertura son obligatorios.");
+    return;
+  }
+
+  try {
+    if (campEditId.value) {
+      await conManejoDeAuth(() =>
+        campanasRepository.update(campEditId.value, datos),
+      );
+    } else {
+      await conManejoDeAuth(() => campanasRepository.add(datos));
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  limpiarFormCampana();
+  await renderCampanas();
+});
+
+campCancelarBtn.addEventListener("click", limpiarFormCampana);
+
+campCarteraFiltro.addEventListener("change", async () => {
+  limpiarFormCampana();
+  await renderCampanas();
+});
 
 // ==================== INICIO ====================
 
