@@ -447,6 +447,10 @@ function copiarComLog() {
   navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
 }
 
+function restablecer() {
+  location.reload();
+}
+
 // Al ser módulo (import), estas funciones ya no quedan en el scope
 // global: se exponen para que los onclick del HTML puedan invocarlas.
 window.agregarDispositivo = agregarDispositivo;
@@ -457,6 +461,7 @@ window.calcularIva = calcularIva;
 window.generar = generar;
 window.copiar = copiar;
 window.copiarComLog = copiarComLog;
+window.restablecer = restablecer;
 
 // ---- Carga inicial ----
 async function init() {

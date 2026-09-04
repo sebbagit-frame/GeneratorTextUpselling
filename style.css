@@ -268,3 +268,9 @@ button.secundario {
   background: var(--card-bg);
   opacity: 0.85;
 }
+#restablecerTopBtn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  margin: 0;
+}
