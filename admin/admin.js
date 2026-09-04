@@ -137,6 +137,10 @@ function cargarDispositivoEnForm(item) {
   dispTipoPlan.value = item.tipoPlan ?? "";
   dispSubmitBtn.textContent = "Guardar cambios";
   dispCancelarBtn.classList.remove("oculto");
+  document.getElementById("formDispositivo").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
 }
 
 async function renderDispositivos() {
@@ -259,6 +263,10 @@ function cargarOperadorEnForm(op) {
   opMatricula.value = op.matricula;
   opSubmitBtn.textContent = "Guardar cambios";
   opCancelarBtn.classList.remove("oculto");
+  document.getElementById("formOperador").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
 }
 
 async function renderOperadores() {
@@ -354,6 +362,10 @@ function cargarCampanaEnForm(campana) {
   campTextoApertura.value = campana.textoApertura;
   campSubmitBtn.textContent = "Guardar cambios";
   campCancelarBtn.classList.remove("oculto");
+  document.getElementById("formCampana").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
 }
 
 async function renderCampanas() {
