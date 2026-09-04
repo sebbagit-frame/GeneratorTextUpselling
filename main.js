@@ -399,7 +399,7 @@ async function generar() {
 
     // El cierre con el operador/matrícula se pega solo al último dispositivo.
     if (index === items.length - 1) {
-      bloque += ` TT recibirá al técnico en el domicilio.-${operador.nombre} -Mtr_ ${operador.matricula}.`;
+      bloque += ` TT recibirá al técnico en el domicilio.-Mtr_ ${operador.matricula}.`;
     }
 
     if (el.querySelector(".disp-cobrado").checked) {
