@@ -353,6 +353,13 @@ async function generar() {
 
   const bloques = [];
 
+  // Si TODOS los dispositivos están marcados como abonados, el marcador va
+  // una sola vez envolviendo todo el cuerpo del mensaje al final (no por
+  // bloque individual, para no repetirlo pegado entre dispositivos).
+  const todosCobrados = Array.from(items).every(
+    (el) => el.querySelector(".disp-cobrado").checked,
+  );
+
   // ---- ComLog: se arma en paralelo al texto de Mantenimiento, agrupando
   // los dispositivos por nombre (no por fila). ----
   const gruposComLog = new Map();
@@ -402,14 +409,18 @@ async function generar() {
       bloque += ` TT recibirá al técnico en el domicilio.-Mtr_ ${operador.matricula}.`;
     }
 
-    if (el.querySelector(".disp-cobrado").checked) {
+    if (el.querySelector(".disp-cobrado").checked && !todosCobrados) {
       bloque = `***NO COBRAR AMPLIACIÓN YA ABONADA***${bloque}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
     }
 
     bloques.push(bloque);
   }
 
-  const texto = `${prefijo} ${bloques.join(" // ")}`;
+  let cuerpo = bloques.join(" // ");
+  if (todosCobrados) {
+    cuerpo = `***NO COBRAR AMPLIACIÓN YA ABONADA***${cuerpo}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+  }
+  const texto = `${prefijo} ${cuerpo}`;
 
   document.getElementById("resultado").textContent = texto;
 
@@ -431,7 +442,7 @@ async function generar() {
     document.getElementById("comentariosAdicionales").value || "-";
 
   const textoComLog = campana
-    ? `${prefijo} ${campana.textoApertura}\n\n${lineasDispositivos}\nSe pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${esAbonado ? ", Ya abonado" : ""}.\n\nComentarios adicionales: ${comentarios}`
+    ? `${prefijo} ${campana.textoApertura}\n\n${lineasDispositivos}\n${fraseTipoPago}\nSe pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${esAbonado ? ", Ya abonado" : ""}.\n\nComentarios adicionales: ${comentarios}`
     : "-";
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
