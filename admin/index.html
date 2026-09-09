@@ -264,6 +264,94 @@
           <tbody></tbody>
         </table>
       </div>
+
+      <div class="card">
+        <h3>Kits PreSense</h3>
+
+        <form id="formPresenseKit">
+          <input type="hidden" id="pkEditId" />
+
+          <label>Nombre</label>
+          <input id="pkNombre" required />
+
+          <div class="row">
+            <div>
+              <label>Valor sin IVA</label>
+              <input id="pkValorSinIva" type="number" step="0.01" required />
+            </div>
+            <div>
+              <label>Valor con IVA</label>
+              <input id="pkValorConIva" type="number" step="0.01" required />
+            </div>
+            <div>
+              <label>Mensual</label>
+              <input id="pkMensual" type="number" step="0.01" />
+            </div>
+          </div>
+
+          <button type="submit" id="pkSubmitBtn">Agregar kit</button>
+          <button type="button" id="pkCancelarBtn" class="secundario oculto">
+            Cancelar edición
+          </button>
+        </form>
+
+        <table id="tablaPresenseKits">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Sin IVA</th>
+              <th>Con IVA</th>
+              <th>Mensual</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Dispositivos PreSense</h3>
+
+        <form id="formPresenseDispositivo">
+          <input type="hidden" id="pdEditId" />
+
+          <label>Nombre</label>
+          <input id="pdNombre" required />
+
+          <div class="row">
+            <div>
+              <label>Valor sin IVA</label>
+              <input id="pdValorSinIva" type="number" step="0.01" required />
+            </div>
+            <div>
+              <label>Valor con IVA</label>
+              <input id="pdValorConIva" type="number" step="0.01" required />
+            </div>
+            <div>
+              <label>Mensual</label>
+              <input id="pdMensual" type="number" step="0.01" />
+            </div>
+          </div>
+
+          <button type="submit" id="pdSubmitBtn">Agregar dispositivo</button>
+          <button type="button" id="pdCancelarBtn" class="secundario oculto">
+            Cancelar edición
+          </button>
+        </form>
+
+        <table id="tablaPresenseDispositivos">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Sin IVA</th>
+              <th>Con IVA</th>
+              <th>Mensual</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </body>
 

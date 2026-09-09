@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generador PreSense - Cambio de Tecnología</title>
+
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="icon" href="../src/image/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body data-theme="light">
+    <button id="themeToggle" aria-label="Cambiar tema">🌙</button>
+
+    <h2>Generador PreSense - Cambio de Tecnología</h2>
+    <p><a href="../index.html">&larr; Volver al Upselling</a></p>
+
+    <div class="card">
+      <label>Nro de instalación</label>
+      <input id="nroInst" placeholder="1532243" />
+
+      <label>Zona</label>
+      <input id="zona" placeholder="Agronomía, CABA CP 1431" />
+
+      <div class="row">
+        <div>
+          <label>Fecha solicitada</label>
+          <input id="fecha" type="date" />
+        </div>
+        <div>
+          <label>Forma de pago (upfront)</label>
+          <select id="formaPago">
+            <option value="cuotas">En cuotas</option>
+            <option value="unico">Pago único</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" id="filaCuotas">
+        <div>
+          <label>Cantidad de cuotas</label>
+          <select id="cuotasFinanciamiento">
+            <option value="3">3 cuotas</option>
+            <option value="6">6 cuotas</option>
+            <option value="9">9 cuotas</option>
+            <option value="12">12 cuotas</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Kits</label>
+      <div id="kitsList"></div>
+    </div>
+
+    <div class="card">
+      <label>Dispositivos</label>
+      <div id="dispositivosList"></div>
+      <button type="button" id="addDisp">+ Agregar dispositivo</button>
+    </div>
+
+    <button type="button" id="generar">Generar cuadro</button>
+
+    <div class="card oculto" id="resultadoWrap">
+      <div class="presense-cuadro">
+        <div class="presense-cuadro-head">
+          <p class="presense-eyebrow">Verisure Argentina</p>
+          <h3>Cambio de tecnología · VF a PreSense</h3>
+        </div>
+        <div class="presense-cuadro-body">
+          <table class="presense-datos">
+            <tr>
+              <td>Nro de instalación</td>
+              <td id="outNro"></td>
+            </tr>
+            <tr>
+              <td>Zona</td>
+              <td id="outZona"></td>
+            </tr>
+            <tr>
+              <td>Fecha solicitada</td>
+              <td id="outFecha"></td>
+            </tr>
+            <tr>
+              <td>Upfront sin IVA</td>
+              <td id="outUpfrontSin"></td>
+            </tr>
+            <tr>
+              <td>Upfront con IVA</td>
+              <td id="outUpfrontCon"></td>
+            </tr>
+            <tr>
+              <td>Abono mensual total</td>
+              <td id="outAbono"></td>
+            </tr>
+            <tr>
+              <td>Dispositivos</td>
+              <td id="outDispositivos"></td>
+            </tr>
+          </table>
+          <div class="presense-aviso">
+            <p class="strong">El cambio de tecnología ya se encuentra abonado.</p>
+            <p>Se adjunta comprobante de pago correspondiente.</p>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="secundario" id="copiarHtml">
+        Copiar cuadro para el mail
+      </button>
+      <button type="button" class="secundario" id="volver">Editar datos</button>
+    </div>
+  </body>
+
+  <script type="module" src="../src/theme.js"></script>
+  <script type="module" src="presense.js"></script>
+</html>

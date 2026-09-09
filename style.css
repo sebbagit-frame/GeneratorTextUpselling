@@ -274,3 +274,124 @@ button.secundario {
   left: 16px;
   margin: 0;
 }
+
+/* ---- PreSense: filas de kits/dispositivos y cuadro de resultado ---- */
+.presense-kit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--table-border);
+}
+.presense-kit-row:last-child {
+  border-bottom: none;
+}
+.presense-kit-row input[type="checkbox"] {
+  width: auto;
+  margin-top: 0;
+}
+.presense-kit-row .presense-kit-nombre {
+  flex: 1;
+  font-size: 14px;
+}
+.presense-disp-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--table-border);
+}
+.presense-disp-item:last-child {
+  border-bottom: none;
+}
+.presense-disp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.presense-disp-row select {
+  flex: 1;
+  margin-top: 0;
+}
+.presense-cant {
+  width: 70px;
+  text-align: center;
+  margin-top: 0;
+}
+.presense-disp-row button {
+  margin-top: 0;
+}
+.presense-disp-ampliacion-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--th-color);
+}
+.presense-disp-ampliacion-label input {
+  width: auto;
+  margin-top: 0;
+}
+
+.presense-cuadro {
+  border: 1px solid var(--dispositivo-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.presense-cuadro-head {
+  padding: 16px 20px;
+  border-bottom: 3px solid var(--btn-bg);
+  background: var(--card-bg);
+}
+.presense-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--btn-bg);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+.presense-cuadro-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-heading);
+}
+.presense-cuadro-body {
+  padding: 16px 20px;
+  background: var(--card-bg);
+}
+table.presense-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 0;
+}
+table.presense-datos td {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--table-border);
+}
+table.presense-datos td:first-child {
+  color: var(--th-color);
+  width: 45%;
+}
+table.presense-datos td:last-child {
+  text-align: right;
+}
+table.presense-datos tr:last-child td {
+  border-bottom: none;
+  vertical-align: top;
+}
+.presense-aviso {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--btn-bg);
+  background: var(--resultado-bg);
+}
+.presense-aviso p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.presense-aviso p.strong {
+  font-weight: 700;
+  margin-bottom: 4px;
+}

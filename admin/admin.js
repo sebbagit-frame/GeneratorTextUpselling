@@ -2,6 +2,8 @@ import * as devicesRepository from "../src/data/devicesRepository.js";
 import * as operatorsRepository from "../src/data/operatorsRepository.js";
 import * as campanasRepository from "../src/data/campanasRepository.js";
 import * as turnosHorariosRepository from "../src/data/turnosHorariosRepository.js";
+import * as presenseKitsRepository from "../src/data/presenseKitsRepository.js";
+import * as presenseDispositivosRepository from "../src/data/presenseDispositivosRepository.js";
 import { API_BASE_URL } from "../src/data/apiConfig.js";
 import { getToken, setToken, clearToken } from "../src/data/authHeader.js";
 
@@ -34,6 +36,8 @@ async function mostrarAdmin() {
   await renderOperadores();
   await renderCampanas();
   await renderTurnos();
+  await renderPresenseKits();
+  await renderPresenseDispositivos();
 }
 
 // Envuelve las llamadas a los repositorios: si el error viene de un 401
@@ -549,6 +553,218 @@ formTurno.addEventListener("submit", async (e) => {
 });
 
 turnoCancelarBtn.addEventListener("click", limpiarFormTurno);
+
+// ==================== KITS PRESENSE ====================
+
+const formPresenseKit = document.getElementById("formPresenseKit");
+const pkEditId = document.getElementById("pkEditId");
+const pkNombre = document.getElementById("pkNombre");
+const pkValorSinIva = document.getElementById("pkValorSinIva");
+const pkValorConIva = document.getElementById("pkValorConIva");
+const pkMensual = document.getElementById("pkMensual");
+const pkSubmitBtn = document.getElementById("pkSubmitBtn");
+const pkCancelarBtn = document.getElementById("pkCancelarBtn");
+const tablaPresenseKitsBody = document.querySelector("#tablaPresenseKits tbody");
+
+function limpiarFormPresenseKit() {
+  pkEditId.value = "";
+  formPresenseKit.reset();
+  pkSubmitBtn.textContent = "Agregar kit";
+  pkCancelarBtn.classList.add("oculto");
+}
+
+function cargarPresenseKitEnForm(kit) {
+  pkEditId.value = kit.id;
+  pkNombre.value = kit.nombre;
+  pkValorSinIva.value = kit.valorSinIva ?? "";
+  pkValorConIva.value = kit.valorConIva ?? "";
+  pkMensual.value = kit.mensual ?? "";
+  pkSubmitBtn.textContent = "Guardar cambios";
+  pkCancelarBtn.classList.remove("oculto");
+  document.getElementById("formPresenseKit").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+async function renderPresenseKits() {
+  let lista;
+  try {
+    lista = await presenseKitsRepository.getAll();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  tablaPresenseKitsBody.innerHTML = "";
+
+  lista.forEach((kit) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${kit.nombre}</td>
+      <td>${kit.valorSinIva ?? "-"}</td>
+      <td>${kit.valorConIva ?? "-"}</td>
+      <td>${kit.mensual ?? "-"}</td>
+      <td>
+        <button type="button" class="editar">Editar</button>
+        <button type="button" class="eliminar quitar">Eliminar</button>
+      </td>
+    `;
+    tr.querySelector(".editar").addEventListener("click", () =>
+      cargarPresenseKitEnForm(kit),
+    );
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
+      if (!confirm(`¿Eliminar "${kit.nombre}"?`)) return;
+      try {
+        await conManejoDeAuth(() => presenseKitsRepository.remove(kit.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderPresenseKits();
+    });
+    tablaPresenseKitsBody.appendChild(tr);
+  });
+}
+
+formPresenseKit.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const datos = {
+    nombre: pkNombre.value.trim(),
+    valorSinIva: parseValorOpcional(pkValorSinIva.value),
+    valorConIva: parseValorOpcional(pkValorConIva.value),
+    mensual: parseValorOpcional(pkMensual.value) ?? 0,
+  };
+
+  if (!datos.nombre || datos.valorSinIva === null || datos.valorConIva === null) {
+    alert("Nombre, valor sin IVA y valor con IVA son obligatorios.");
+    return;
+  }
+
+  try {
+    if (pkEditId.value) {
+      await conManejoDeAuth(() => presenseKitsRepository.update(pkEditId.value, datos));
+    } else {
+      await conManejoDeAuth(() => presenseKitsRepository.add(datos));
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  limpiarFormPresenseKit();
+  await renderPresenseKits();
+});
+
+pkCancelarBtn.addEventListener("click", limpiarFormPresenseKit);
+
+// ==================== DISPOSITIVOS PRESENSE ====================
+
+const formPresenseDispositivo = document.getElementById("formPresenseDispositivo");
+const pdEditId = document.getElementById("pdEditId");
+const pdNombre = document.getElementById("pdNombre");
+const pdValorSinIva = document.getElementById("pdValorSinIva");
+const pdValorConIva = document.getElementById("pdValorConIva");
+const pdMensual = document.getElementById("pdMensual");
+const pdSubmitBtn = document.getElementById("pdSubmitBtn");
+const pdCancelarBtn = document.getElementById("pdCancelarBtn");
+const tablaPresenseDispositivosBody = document.querySelector(
+  "#tablaPresenseDispositivos tbody",
+);
+
+function limpiarFormPresenseDispositivo() {
+  pdEditId.value = "";
+  formPresenseDispositivo.reset();
+  pdSubmitBtn.textContent = "Agregar dispositivo";
+  pdCancelarBtn.classList.add("oculto");
+}
+
+function cargarPresenseDispositivoEnForm(item) {
+  pdEditId.value = item.id;
+  pdNombre.value = item.nombre;
+  pdValorSinIva.value = item.valorSinIva ?? "";
+  pdValorConIva.value = item.valorConIva ?? "";
+  pdMensual.value = item.mensual ?? "";
+  pdSubmitBtn.textContent = "Guardar cambios";
+  pdCancelarBtn.classList.remove("oculto");
+  document.getElementById("formPresenseDispositivo").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+async function renderPresenseDispositivos() {
+  let lista;
+  try {
+    lista = await presenseDispositivosRepository.getAll();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  tablaPresenseDispositivosBody.innerHTML = "";
+
+  lista.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.nombre}</td>
+      <td>${item.valorSinIva ?? "-"}</td>
+      <td>${item.valorConIva ?? "-"}</td>
+      <td>${item.mensual ?? "-"}</td>
+      <td>
+        <button type="button" class="editar">Editar</button>
+        <button type="button" class="eliminar quitar">Eliminar</button>
+      </td>
+    `;
+    tr.querySelector(".editar").addEventListener("click", () =>
+      cargarPresenseDispositivoEnForm(item),
+    );
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
+      if (!confirm(`¿Eliminar "${item.nombre}"?`)) return;
+      try {
+        await conManejoDeAuth(() => presenseDispositivosRepository.remove(item.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderPresenseDispositivos();
+    });
+    tablaPresenseDispositivosBody.appendChild(tr);
+  });
+}
+
+formPresenseDispositivo.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const datos = {
+    nombre: pdNombre.value.trim(),
+    valorSinIva: parseValorOpcional(pdValorSinIva.value),
+    valorConIva: parseValorOpcional(pdValorConIva.value),
+    mensual: parseValorOpcional(pdMensual.value) ?? 0,
+  };
+
+  if (!datos.nombre || datos.valorSinIva === null || datos.valorConIva === null) {
+    alert("Nombre, valor sin IVA y valor con IVA son obligatorios.");
+    return;
+  }
+
+  try {
+    if (pdEditId.value) {
+      await conManejoDeAuth(() =>
+        presenseDispositivosRepository.update(pdEditId.value, datos),
+      );
+    } else {
+      await conManejoDeAuth(() => presenseDispositivosRepository.add(datos));
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  limpiarFormPresenseDispositivo();
+  await renderPresenseDispositivos();
+});
+
+pdCancelarBtn.addEventListener("click", limpiarFormPresenseDispositivo);
 
 // ==================== INICIO ====================
 
