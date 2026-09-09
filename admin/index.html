@@ -224,6 +224,46 @@
           </table>
         </div>
       </div>
+
+      <div class="card">
+        <h3>Turnos horarios</h3>
+
+        <form id="formTurno">
+          <input type="hidden" id="turnoEditId" />
+
+          <div class="row">
+            <div>
+              <label>Hora inicio</label>
+              <input id="turnoHoraInicio" type="time" required />
+            </div>
+            <div>
+              <label>Hora fin</label>
+              <input id="turnoHoraFin" type="time" required />
+            </div>
+            <div>
+              <label>Orden</label>
+              <input id="turnoOrden" type="number" step="1" required />
+            </div>
+          </div>
+
+          <button type="submit" id="turnoSubmitBtn">Agregar turno</button>
+          <button type="button" id="turnoCancelarBtn" class="secundario oculto">
+            Cancelar edición
+          </button>
+        </form>
+
+        <table id="tablaTurnos">
+          <thead>
+            <tr>
+              <th>Hora inicio</th>
+              <th>Hora fin</th>
+              <th>Orden</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </body>
 

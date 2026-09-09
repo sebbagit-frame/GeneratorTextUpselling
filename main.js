@@ -1,6 +1,7 @@
 import * as devicesRepository from "./src/data/devicesRepository.js";
 import * as operatorsRepository from "./src/data/operatorsRepository.js";
 import * as campanasRepository from "./src/data/campanasRepository.js";
+import * as turnosHorariosRepository from "./src/data/turnosHorariosRepository.js";
 
 // ---- OPERADORES (desde el backend) ----
 let OPERADORES = [];
@@ -9,9 +10,13 @@ let OPERADORES = [];
 let CAMPANAS = [];
 const campanasCache = {};
 
+// ---- TURNOS HORARIOS (desde el backend, configurables desde el admin) ----
+let TURNOS = [];
+
 const selOperador = document.getElementById("operador");
 const selCampana = document.getElementById("campana");
 const selCartera = document.getElementById("cartera");
+const selTurnoHorario = document.getElementById("turnoHorario");
 
 // Cargar cuotas 3 a 12
 const selCuotas = document.getElementById("cuotas");
@@ -56,6 +61,26 @@ async function cargarCampanas() {
 }
 
 selCartera.addEventListener("change", cargarCampanas);
+
+// Carga los turnos horarios configurados desde el admin y puebla el select.
+// No depende de ningún otro campo (a diferencia de Campaña), así que se
+// carga una sola vez en init().
+async function cargarTurnosHorarios() {
+  try {
+    TURNOS = await turnosHorariosRepository.getAll();
+  } catch (err) {
+    alert(err.message);
+    TURNOS = [];
+  }
+
+  selTurnoHorario.innerHTML = "";
+  TURNOS.forEach((turno) => {
+    const opt = document.createElement("option");
+    opt.value = turno.id;
+    opt.textContent = `${turno.horaInicio} - ${turno.horaFin}`;
+    selTurnoHorario.appendChild(opt);
+  });
+}
 
 function formatoMoneda(num) {
   const truncado = Math.trunc(num);
@@ -436,8 +461,11 @@ async function generar() {
   const fechaFormateada = formatearFecha(
     document.getElementById("fechaVisita").value,
   );
-  const horaDesde = document.getElementById("horaDesde").value || "-";
-  const horaHasta = document.getElementById("horaHasta").value || "-";
+  const turnoSeleccionado = TURNOS.find(
+    (t) => String(t.id) === selTurnoHorario.value,
+  );
+  const horaDesde = turnoSeleccionado ? turnoSeleccionado.horaInicio : "-";
+  const horaHasta = turnoSeleccionado ? turnoSeleccionado.horaFin : "-";
   const comentarios =
     document.getElementById("comentariosAdicionales").value || "-";
 
@@ -494,6 +522,7 @@ async function init() {
   setCargando(false);
 
   await cargarCampanas();
+  await cargarTurnosHorarios();
 
   // Cargar el primer dispositivo por defecto
   await agregarDispositivo();

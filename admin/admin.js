@@ -1,6 +1,7 @@
 import * as devicesRepository from "../src/data/devicesRepository.js";
 import * as operatorsRepository from "../src/data/operatorsRepository.js";
 import * as campanasRepository from "../src/data/campanasRepository.js";
+import * as turnosHorariosRepository from "../src/data/turnosHorariosRepository.js";
 import { API_BASE_URL } from "../src/data/apiConfig.js";
 import { getToken, setToken, clearToken } from "../src/data/authHeader.js";
 
@@ -32,6 +33,7 @@ async function mostrarAdmin() {
   await renderDispositivos();
   await renderOperadores();
   await renderCampanas();
+  await renderTurnos();
 }
 
 // Envuelve las llamadas a los repositorios: si el error viene de un 401
@@ -445,6 +447,108 @@ campCarteraFiltro.addEventListener("change", async () => {
   limpiarFormCampana();
   await renderCampanas();
 });
+
+// ==================== TURNOS HORARIOS ====================
+
+const formTurno = document.getElementById("formTurno");
+const turnoEditId = document.getElementById("turnoEditId");
+const turnoHoraInicio = document.getElementById("turnoHoraInicio");
+const turnoHoraFin = document.getElementById("turnoHoraFin");
+const turnoOrden = document.getElementById("turnoOrden");
+const turnoSubmitBtn = document.getElementById("turnoSubmitBtn");
+const turnoCancelarBtn = document.getElementById("turnoCancelarBtn");
+const tablaTurnosBody = document.querySelector("#tablaTurnos tbody");
+
+function limpiarFormTurno() {
+  turnoEditId.value = "";
+  formTurno.reset();
+  turnoSubmitBtn.textContent = "Agregar turno";
+  turnoCancelarBtn.classList.add("oculto");
+}
+
+function cargarTurnoEnForm(turno) {
+  turnoEditId.value = turno.id;
+  turnoHoraInicio.value = turno.horaInicio;
+  turnoHoraFin.value = turno.horaFin;
+  turnoOrden.value = turno.orden;
+  turnoSubmitBtn.textContent = "Guardar cambios";
+  turnoCancelarBtn.classList.remove("oculto");
+  document.getElementById("formTurno").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+async function renderTurnos() {
+  let lista;
+  try {
+    lista = await turnosHorariosRepository.getAll();
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  tablaTurnosBody.innerHTML = "";
+
+  lista.forEach((turno) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${turno.horaInicio}</td>
+      <td>${turno.horaFin}</td>
+      <td>${turno.orden}</td>
+      <td>
+        <button type="button" class="editar">Editar</button>
+        <button type="button" class="eliminar quitar">Eliminar</button>
+      </td>
+    `;
+    tr.querySelector(".editar").addEventListener("click", () =>
+      cargarTurnoEnForm(turno),
+    );
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
+      if (!confirm(`¿Eliminar el turno ${turno.horaInicio} - ${turno.horaFin}?`)) return;
+      try {
+        await conManejoDeAuth(() => turnosHorariosRepository.remove(turno.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderTurnos();
+    });
+    tablaTurnosBody.appendChild(tr);
+  });
+}
+
+formTurno.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const datos = {
+    horaInicio: turnoHoraInicio.value,
+    horaFin: turnoHoraFin.value,
+    orden: parseInt(turnoOrden.value, 10),
+  };
+
+  if (!datos.horaInicio || !datos.horaFin || Number.isNaN(datos.orden)) {
+    alert("Hora inicio, hora fin y orden son obligatorios.");
+    return;
+  }
+
+  try {
+    if (turnoEditId.value) {
+      await conManejoDeAuth(() =>
+        turnosHorariosRepository.update(turnoEditId.value, datos),
+      );
+    } else {
+      await conManejoDeAuth(() => turnosHorariosRepository.add(datos));
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  limpiarFormTurno();
+  await renderTurnos();
+});
+
+turnoCancelarBtn.addEventListener("click", limpiarFormTurno);
 
 // ==================== INICIO ====================
 
