@@ -1,9 +1,14 @@
 import * as presenseKitsRepository from "../src/data/presenseKitsRepository.js";
 import * as presenseDispositivosRepository from "../src/data/presenseDispositivosRepository.js";
+import * as presenseKitComposicionRepository from "../src/data/presenseKitComposicionRepository.js";
 
 // ---- Catálogos (desde el backend) ----
 let KITS = [];
 let DISPOSITIVOS = [];
+
+// Composición de cada kit (qué dispositivos incluye), cacheada por kitId a
+// medida que se van tildando kits en el formulario.
+const composicionPorKitId = {};
 
 const kitsList = document.getElementById("kitsList");
 const dispositivosList = document.getElementById("dispositivosList");
@@ -33,6 +38,19 @@ function formatearFecha(fechaISO) {
   return `${dia}/${mes}/${anio}`;
 }
 
+// Pide (y cachea) la composición de un kit la primera vez que se necesita.
+async function obtenerComposicion(kitId) {
+  if (!composicionPorKitId[kitId]) {
+    try {
+      composicionPorKitId[kitId] = await presenseKitComposicionRepository.getByKitId(kitId);
+    } catch (err) {
+      alert(err.message);
+      composicionPorKitId[kitId] = [];
+    }
+  }
+  return composicionPorKitId[kitId];
+}
+
 function renderKits() {
   kitsList.innerHTML = "";
   KITS.forEach((kit, i) => {
@@ -43,6 +61,11 @@ function renderKits() {
       <span class="presense-kit-nombre">${kit.nombre} — ${formatoMoneda(kit.valorConIva)}</span>
       <input type="text" class="presense-cant kit-cant" value="1">
     `;
+    // Al tildar el kit, se precarga su composición para tenerla lista y
+    // poder usarla de forma síncrona al armar el cuadro en calcular().
+    row.querySelector(".kit-check").addEventListener("change", (e) => {
+      if (e.target.checked) obtenerComposicion(kit.id);
+    });
     kitsList.appendChild(row);
   });
 }
@@ -95,7 +118,18 @@ function calcular() {
     totalSinIva += kit.valorSinIva * cant;
     totalConIva += kit.valorConIva * cant;
     totalMensual += kit.mensual * cant;
-    partes.push(`${cant} ${kit.nombre}`);
+
+    // El nombre genérico del kit se reemplaza por el desglose de los
+    // dispositivos que lo componen (si ya se cargó su composición). Cada
+    // item de la composición escala con la cantidad de kits vendidos.
+    const composicion = composicionPorKitId[kit.id] || [];
+    if (composicion.length > 0) {
+      composicion.forEach((item) => {
+        partes.push(`${item.cantidad * cant} ${item.nombreItem}`);
+      });
+    } else {
+      partes.push(`${cant} ${kit.nombre}`);
+    }
   });
 
   // Cuando hay un kit seleccionado, su upfront ya incluye los dispositivos

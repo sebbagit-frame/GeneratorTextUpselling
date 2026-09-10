@@ -307,6 +307,46 @@
           </thead>
           <tbody></tbody>
         </table>
+
+        <div id="composicionWrap" class="oculto">
+          <h4 class="subtitulo">Composición del kit</h4>
+
+          <form id="formComposicionItem">
+            <input type="hidden" id="compEditId" />
+
+            <div class="row">
+              <div>
+                <label>Nombre item</label>
+                <input id="compNombreItem" required />
+              </div>
+              <div>
+                <label>Cantidad</label>
+                <input id="compCantidad" type="number" min="1" step="1" value="1" />
+              </div>
+              <div>
+                <label>Orden</label>
+                <input id="compOrden" type="number" step="1" value="0" />
+              </div>
+            </div>
+
+            <button type="submit" id="compSubmitBtn">Agregar item</button>
+            <button type="button" id="compCancelarBtn" class="secundario oculto">
+              Cancelar edición
+            </button>
+          </form>
+
+          <table id="tablaComposicion">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Orden</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">

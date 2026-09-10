@@ -111,6 +111,13 @@ textarea {
   text-transform: uppercase;
   color: var(--th-color);
 }
+h4.subtitulo {
+  margin: 20px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--th-color);
+}
 .grid-campos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

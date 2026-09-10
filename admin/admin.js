@@ -4,6 +4,7 @@ import * as campanasRepository from "../src/data/campanasRepository.js";
 import * as turnosHorariosRepository from "../src/data/turnosHorariosRepository.js";
 import * as presenseKitsRepository from "../src/data/presenseKitsRepository.js";
 import * as presenseDispositivosRepository from "../src/data/presenseDispositivosRepository.js";
+import * as presenseKitComposicionRepository from "../src/data/presenseKitComposicionRepository.js";
 import { API_BASE_URL } from "../src/data/apiConfig.js";
 import { getToken, setToken, clearToken } from "../src/data/authHeader.js";
 
@@ -571,6 +572,11 @@ function limpiarFormPresenseKit() {
   formPresenseKit.reset();
   pkSubmitBtn.textContent = "Agregar kit";
   pkCancelarBtn.classList.add("oculto");
+  // La composición es un sub-recurso del kit: al salir del modo edición
+  // (guardar, cancelar o terminar de agregar uno nuevo) se oculta también.
+  composicionWrap.classList.add("oculto");
+  tablaComposicionBody.innerHTML = "";
+  limpiarFormComposicion();
 }
 
 function cargarPresenseKitEnForm(kit) {
@@ -585,6 +591,11 @@ function cargarPresenseKitEnForm(kit) {
     behavior: "smooth",
     block: "start",
   });
+
+  // La composición solo tiene sentido para un kit que ya existe (necesita
+  // su id real), por eso se muestra recién acá, al editar uno guardado.
+  composicionWrap.classList.remove("oculto");
+  renderComposicion(kit.id);
 }
 
 async function renderPresenseKits() {
@@ -657,6 +668,118 @@ formPresenseKit.addEventListener("submit", async (e) => {
 });
 
 pkCancelarBtn.addEventListener("click", limpiarFormPresenseKit);
+
+// ==================== COMPOSICIÓN DE KITS PRESENSE ====================
+// Sub-recurso de Kits PreSense: solo se muestra mientras se edita un kit
+// existente (pkEditId tiene valor), ver cargarPresenseKitEnForm/
+// limpiarFormPresenseKit más arriba.
+
+const composicionWrap = document.getElementById("composicionWrap");
+const formComposicionItem = document.getElementById("formComposicionItem");
+const compEditId = document.getElementById("compEditId");
+const compNombreItem = document.getElementById("compNombreItem");
+const compCantidad = document.getElementById("compCantidad");
+const compOrden = document.getElementById("compOrden");
+const compSubmitBtn = document.getElementById("compSubmitBtn");
+const compCancelarBtn = document.getElementById("compCancelarBtn");
+const tablaComposicionBody = document.querySelector("#tablaComposicion tbody");
+
+function limpiarFormComposicion() {
+  compEditId.value = "";
+  formComposicionItem.reset();
+  compCantidad.value = "1";
+  compOrden.value = "0";
+  compSubmitBtn.textContent = "Agregar item";
+  compCancelarBtn.classList.add("oculto");
+}
+
+function cargarComposicionEnForm(item) {
+  compEditId.value = item.id;
+  compNombreItem.value = item.nombreItem;
+  compCantidad.value = item.cantidad;
+  compOrden.value = item.orden;
+  compSubmitBtn.textContent = "Guardar cambios";
+  compCancelarBtn.classList.remove("oculto");
+}
+
+async function renderComposicion(kitId) {
+  let lista;
+  try {
+    lista = await presenseKitComposicionRepository.getByKitId(kitId);
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  tablaComposicionBody.innerHTML = "";
+
+  lista.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.nombreItem}</td>
+      <td>${item.cantidad}</td>
+      <td>${item.orden}</td>
+      <td>
+        <button type="button" class="editar">Editar</button>
+        <button type="button" class="eliminar quitar">Eliminar</button>
+      </td>
+    `;
+    tr.querySelector(".editar").addEventListener("click", () =>
+      cargarComposicionEnForm(item),
+    );
+    tr.querySelector(".eliminar").addEventListener("click", async () => {
+      if (!confirm(`¿Eliminar "${item.nombreItem}" de la composición?`)) return;
+      try {
+        await conManejoDeAuth(() => presenseKitComposicionRepository.remove(item.id));
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      await renderComposicion(kitId);
+    });
+    tablaComposicionBody.appendChild(tr);
+  });
+}
+
+formComposicionItem.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!pkEditId.value) {
+    alert("Guardá el kit antes de agregarle composición.");
+    return;
+  }
+
+  const datos = {
+    nombreItem: compNombreItem.value.trim(),
+    cantidad: parseInt(compCantidad.value, 10) || 1,
+    orden: parseInt(compOrden.value, 10) || 0,
+  };
+
+  if (!datos.nombreItem) {
+    alert("El nombre del item es obligatorio.");
+    return;
+  }
+
+  try {
+    if (compEditId.value) {
+      await conManejoDeAuth(() =>
+        presenseKitComposicionRepository.update(compEditId.value, datos),
+      );
+    } else {
+      await conManejoDeAuth(() =>
+        presenseKitComposicionRepository.add(pkEditId.value, datos),
+      );
+    }
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+
+  limpiarFormComposicion();
+  await renderComposicion(pkEditId.value);
+});
+
+compCancelarBtn.addEventListener("click", limpiarFormComposicion);
 
 // ==================== DISPOSITIVOS PRESENSE ====================
 
