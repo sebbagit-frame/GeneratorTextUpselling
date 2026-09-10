@@ -210,7 +210,7 @@ document.getElementById("volver").addEventListener("click", () => {
 document.getElementById("copiarHtml").addEventListener("click", async () => {
   const fueAbonado = document.getElementById("fueAbonado").checked;
   const filaAviso = fueAbonado
-    ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">El cambio de tecnología ya se encuentra abonado.</span>
+    ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">EL CAMBIO DE TECNOLOGÍA YA SE ENCUENTRA ABONADO.</span>
       <span style="font-size:13px;">Se adjunta comprobante de pago correspondiente.</span>`
     : `<span style="font-size:13px;">El cambio de tecnología no está abonado.</span>`;
 
