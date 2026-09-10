@@ -387,26 +387,6 @@ table.presense-datos tr:last-child td {
   border-bottom: none;
   vertical-align: top;
 }
-.presense-badge-estado {
-  display: none;
-  text-align: center;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-bottom: 14px;
-  color: #fff;
-}
-.presense-badge-estado.abonado {
-  display: block;
-  background-color: #1a7f37;
-}
-.presense-badge-estado.no-abonado {
-  display: block;
-  background-color: #e6e930;
-}
 .presense-aviso {
   margin-top: 14px;
   padding: 10px 14px;
@@ -421,4 +401,7 @@ table.presense-datos tr:last-child td {
 .presense-aviso p.strong {
   font-weight: 700;
   margin-bottom: 4px;
+}
+.presense-aviso p.abonado {
+  color: #1a7f37;
 }

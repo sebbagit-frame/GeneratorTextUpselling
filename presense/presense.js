@@ -182,9 +182,17 @@ document.getElementById("generar").addEventListener("click", () => {
 
   // Bloque puramente visual/informativo: no afecta ningún cálculo.
   const fueAbonado = document.getElementById("fueAbonado").checked;
-  const outEstadoPago = document.getElementById("outEstadoPago");
-  outEstadoPago.textContent = fueAbonado ? "Abonado" : "No fue abonado";
-  outEstadoPago.className = "presense-badge-estado " + (fueAbonado ? "abonado" : "no-abonado");
+  const outAvisoAbonado = document.getElementById("outAvisoAbonado");
+  const outAvisoComprobante = document.getElementById("outAvisoComprobante");
+  if (fueAbonado) {
+    outAvisoAbonado.textContent = "El cambio de tecnología ya se encuentra abonado.";
+    outAvisoAbonado.className = "strong abonado";
+    outAvisoComprobante.classList.remove("oculto");
+  } else {
+    outAvisoAbonado.textContent = "El cambio de tecnología no está abonado.";
+    outAvisoAbonado.className = "";
+    outAvisoComprobante.classList.add("oculto");
+  }
 
   resultadoWrap.classList.remove("oculto");
   resultadoWrap.scrollIntoView({ behavior: "smooth" });
@@ -201,17 +209,16 @@ document.getElementById("volver").addEventListener("click", () => {
 // de arriba, que usa las clases y variables de tema de style.css.
 document.getElementById("copiarHtml").addEventListener("click", async () => {
   const fueAbonado = document.getElementById("fueAbonado").checked;
-  const colorEstado = fueAbonado ? "#1a7f37" : "#c53030";
-  const textoEstado = fueAbonado ? "ABONADO" : "NO FUE ABONADO";
+  const filaAviso = fueAbonado
+    ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">El cambio de tecnología ya se encuentra abonado.</span>
+      <span style="font-size:13px;">Se adjunta comprobante de pago correspondiente.</span>`
+    : `<span style="font-size:13px;">El cambio de tecnología no está abonado.</span>`;
 
   const html = `
   <table cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;font-family:Arial,sans-serif;border:1px solid #c7c9cb;">
     <tr><td colspan="2" style="padding:14px 18px;border-bottom:3px solid #ED002F;">
       <span style="font-size:11px;letter-spacing:0.04em;color:#AB192D;font-weight:bold;">VERISURE ARGENTINA</span><br>
       <span style="font-size:16px;color:#262626;">Cambio de tecnología · VF a PreSense</span>
-    </td></tr>
-    <tr><td colspan="2" style="padding:12px 18px;">
-      <span style="display:block;text-align:center;background-color:${colorEstado};color:#fff;font-weight:bold;font-size:13px;letter-spacing:0.03em;padding:8px 12px;border-radius:6px;">${textoEstado}</span>
     </td></tr>
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Nro de instalación</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outNro").textContent}</td></tr>
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Zona</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outZona").textContent}</td></tr>
@@ -221,8 +228,7 @@ document.getElementById("copiarHtml").addEventListener("click", async () => {
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Abono mensual total</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outAbono").textContent}</td></tr>
     <tr><td style="padding:9px 18px;color:#8A8C8E;font-size:14px;">Dispositivos</td><td style="padding:9px 18px;text-align:right;font-size:14px;">${document.getElementById("outDispositivos").textContent}</td></tr>
     <tr><td colspan="2" style="padding:12px 18px;background:#f0f1f1;border-left:3px solid #ED002F;">
-      <span style="font-size:13px;font-weight:bold;display:block;">El cambio de tecnología ya se encuentra abonado.</span>
-      <span style="font-size:13px;">Se adjunta comprobante de pago correspondiente.</span>
+      ${filaAviso}
     </td></tr>
   </table>`;
 
