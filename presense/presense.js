@@ -213,7 +213,7 @@ function calcular() {
       totalConIva += d.valorConIva * cant;
       partes.push(`${cant} ${d.nombre}` + (hayKitSeleccionado ? " (ampliación aparte)" : ""));
     } else {
-      partes.push(`${cant} ${d.nombre} (solo RMR)`);
+      partes.push(`${cant} ${d.nombre}`);
     }
   });
 
