@@ -121,6 +121,9 @@ function calcular() {
     }
   });
 
+  const mensualidadVigente = parseFloat(document.getElementById("mensualidadVigente").value) || 0;
+  totalMensual += mensualidadVigente;
+
   return { totalSinIva, totalConIva, totalMensual, dispositivosTexto: partes.join(" + ") };
 }
 
