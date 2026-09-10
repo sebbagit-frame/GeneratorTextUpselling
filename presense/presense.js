@@ -1,10 +1,15 @@
 import * as presenseKitsRepository from "../src/data/presenseKitsRepository.js";
 import * as presenseDispositivosRepository from "../src/data/presenseDispositivosRepository.js";
 import * as presenseKitComposicionRepository from "../src/data/presenseKitComposicionRepository.js";
+import * as campanasRepository from "../src/data/campanasRepository.js";
 
 // ---- Catálogos (desde el backend) ----
 let KITS = [];
 let DISPOSITIVOS = [];
+
+// ---- Campañas para el speech ComLog (dependen de la cartera elegida) ----
+let CAMPANAS_PS = [];
+const campanasPsCache = {};
 
 // Composición de cada kit (qué dispositivos incluye), cacheada por kitId a
 // medida que se van tildando kits en el formulario.
@@ -37,6 +42,41 @@ function formatearFecha(fechaISO) {
   const [anio, mes, dia] = fechaISO.split("-");
   return `${dia}/${mes}/${anio}`;
 }
+
+// Igual que formatearFecha, pero sin el año - formato que ya usa el ComLog
+// del generador principal para esta misma línea del speech.
+function formatearFechaCorta(fechaISO) {
+  if (!fechaISO) return "-";
+  const [, mes, dia] = fechaISO.split("-");
+  return `${dia}/${mes}`;
+}
+
+// Repuebla el select de Campaña (para el speech ComLog) según la cartera
+// elegida, mismo patrón que ya usa el generador principal.
+async function cargarCampanasPresense() {
+  const cartera = document.getElementById("psCartera").value;
+
+  if (!campanasPsCache[cartera]) {
+    try {
+      campanasPsCache[cartera] = await campanasRepository.getAll(cartera);
+    } catch (err) {
+      alert(err.message);
+      campanasPsCache[cartera] = [];
+    }
+  }
+
+  CAMPANAS_PS = campanasPsCache[cartera];
+  const selCampana = document.getElementById("psCampana");
+  selCampana.innerHTML = "";
+  CAMPANAS_PS.forEach((campana, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = campana.nombre;
+    selCampana.appendChild(opt);
+  });
+}
+
+document.getElementById("psCartera").addEventListener("change", cargarCampanasPresense);
 
 // Pide (y cachea) la composición de un kit la primera vez que se necesita.
 async function obtenerComposicion(kitId) {
@@ -109,6 +149,12 @@ function calcular() {
   const partes = [];
   let hayKitSeleccionado = false;
 
+  // Info estructurada de kits/dispositivos, para que el speech ComLog arme
+  // sus propias líneas reutilizando estos valores ya calculados, sin volver
+  // a leer el DOM ni recalcular nada.
+  const kitsInfo = [];
+  const dispositivosInfo = [];
+
   document.querySelectorAll(".kit-check").forEach((chk) => {
     if (!chk.checked) return;
     hayKitSeleccionado = true;
@@ -118,6 +164,13 @@ function calcular() {
     totalSinIva += kit.valorSinIva * cant;
     totalConIva += kit.valorConIva * cant;
     totalMensual += kit.mensual * cant;
+
+    kitsInfo.push({
+      nombre: kit.nombre,
+      cantidad: cant,
+      valorConIvaTotal: kit.valorConIva * cant,
+      mensualTotal: kit.mensual * cant,
+    });
 
     // El nombre genérico del kit se reemplaza por el desglose de los
     // dispositivos que lo componen (si ya se cargó su composición). Cada
@@ -143,10 +196,19 @@ function calcular() {
     if (cant <= 0) return;
     const d = DISPOSITIVOS[idx];
     const ampliacionAparte = item.querySelector(".presense-disp-ampliacion-aparte").checked;
+    const tieneUpfrontPropio = !hayKitSeleccionado || ampliacionAparte;
 
     totalMensual += d.mensual * cant;
 
-    if (!hayKitSeleccionado || ampliacionAparte) {
+    dispositivosInfo.push({
+      nombre: d.nombre,
+      cantidad: cant,
+      tieneUpfrontPropio,
+      valorConIvaTotal: d.valorConIva * cant,
+      mensualTotal: d.mensual * cant,
+    });
+
+    if (tieneUpfrontPropio) {
       totalSinIva += d.valorSinIva * cant;
       totalConIva += d.valorConIva * cant;
       partes.push(`${cant} ${d.nombre}` + (hayKitSeleccionado ? " (ampliación aparte)" : ""));
@@ -155,14 +217,71 @@ function calcular() {
     }
   });
 
+  // Suma de RMR (kit + dispositivos) ANTES de sumar la mensualidad vigente
+  // del cliente - la usa el speech ComLog, que no incluye ese campo.
+  const totalRMR = kitsInfo.reduce((acc, k) => acc + k.mensualTotal, 0) +
+    dispositivosInfo.reduce((acc, d) => acc + d.mensualTotal, 0);
+
   const mensualidadVigente = parseFloat(document.getElementById("mensualidadVigente").value) || 0;
   totalMensual += mensualidadVigente;
 
-  return { totalSinIva, totalConIva, totalMensual, dispositivosTexto: partes.join(" + ") };
+  return {
+    totalSinIva,
+    totalConIva,
+    totalMensual,
+    dispositivosTexto: partes.join(" + "),
+    kitsInfo,
+    dispositivosInfo,
+    totalRMR,
+  };
+}
+
+// Arma el speech ComLog reutilizando la info estructurada que ya calculó
+// calcular() para el cuadro - no vuelve a leer el DOM de kits/dispositivos
+// ni recalcula ningún valor.
+function generarSpeechPresense(resultadoCalculo) {
+  const { kitsInfo, dispositivosInfo, totalRMR } = resultadoCalculo;
+
+  const cartera = document.getElementById("psCartera").value;
+  const prefijo = cartera === "OUT" ? "AR_UPSELLING_OUT:" : "AR_UPSELLING:";
+  const campana = CAMPANAS_PS[document.getElementById("psCampana").value];
+
+  const formaPago = document.getElementById("formaPago").value;
+  const cuotas = document.getElementById("cuotasFinanciamiento").value;
+  const fraseTipoPago =
+    formaPago === "unico"
+      ? "Todo en 1 pago."
+      : `Todo en ${cuotas} cuotas con tarjeta de crédito visa/MasterCard Bancaria.`;
+
+  const lineas = [];
+  kitsInfo.forEach((kit) => {
+    lineas.push(
+      `Ampliación de ${kit.cantidad} ${kit.nombre} valor final: ${formatoMoneda(kit.valorConIvaTotal)} adicional mensual: ${formatoMoneda(kit.mensualTotal)}`,
+    );
+  });
+  dispositivosInfo.forEach((d) => {
+    if (d.tieneUpfrontPropio) {
+      lineas.push(
+        `Ampliación de ${d.cantidad} ${d.nombre} valor final: ${formatoMoneda(d.valorConIvaTotal)} adicional mensual: ${formatoMoneda(d.mensualTotal)}`,
+      );
+    } else {
+      lineas.push(`${d.cantidad} ${d.nombre}`);
+    }
+  });
+
+  const fechaFormateada = formatearFechaCorta(document.getElementById("fecha").value);
+  const fueAbonado = document.getElementById("fueAbonado").checked;
+
+  const textoSpeech = campana
+    ? `${prefijo} ${campana.textoApertura}\n\n${lineas.join("\n")}\n${fraseTipoPago}\nSe pacta visita para el día ${fechaFormateada}${fueAbonado ? ", Ya abonado" : ""}.\n\nTotal RMR: ${formatoMoneda(totalRMR)}`
+    : "-";
+
+  document.getElementById("outSpeechComLog").textContent = textoSpeech;
 }
 
 document.getElementById("generar").addEventListener("click", () => {
-  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto } = calcular();
+  const resultadoCalculo = calcular();
+  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto } = resultadoCalculo;
   const formaPago = document.getElementById("formaPago").value;
   const cuotas = document.getElementById("cuotasFinanciamiento").value;
   const textoUpfrontCon =
@@ -194,12 +313,16 @@ document.getElementById("generar").addEventListener("click", () => {
     outAvisoComprobante.classList.add("oculto");
   }
 
+  generarSpeechPresense(resultadoCalculo);
+
   resultadoWrap.classList.remove("oculto");
+  document.getElementById("resultadoSpeechWrap").classList.remove("oculto");
   resultadoWrap.scrollIntoView({ behavior: "smooth" });
 });
 
 document.getElementById("volver").addEventListener("click", () => {
   resultadoWrap.classList.add("oculto");
+  document.getElementById("resultadoSpeechWrap").classList.add("oculto");
 });
 
 // El HTML que se copia va pegado directo en el cuerpo de un mail de Outlook,
@@ -277,6 +400,11 @@ document.getElementById("copiarHtml").addEventListener("click", async () => {
   }
 });
 
+document.getElementById("copiarSpeechComLog").addEventListener("click", () => {
+  const texto = document.getElementById("outSpeechComLog").textContent;
+  navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
+});
+
 // ---- Carga inicial ----
 async function init() {
   try {
@@ -295,6 +423,7 @@ async function init() {
 
   renderKits();
   nuevaFilaDispositivo();
+  await cargarCampanasPresense();
 }
 
 init();

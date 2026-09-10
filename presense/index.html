@@ -53,6 +53,20 @@
         <input type="checkbox" id="fueAbonado" style="width:auto">
         ¿Fue abonado?
       </label>
+
+      <div class="row">
+        <div>
+          <label>Cartera</label>
+          <select id="psCartera">
+            <option value="IN">IN</option>
+            <option value="OUT">OUT</option>
+          </select>
+        </div>
+        <div>
+          <label>Campaña</label>
+          <select id="psCampana"></select>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -116,6 +130,12 @@
         Copiar cuadro para el mail
       </button>
       <button type="button" class="secundario" id="volver">Editar datos</button>
+    </div>
+
+    <div class="card oculto" id="resultadoSpeechWrap">
+      <label>Speech ComLog</label>
+      <div id="outSpeechComLog" contenteditable="true">-</div>
+      <button class="copiar" id="copiarSpeechComLog">Copiar</button>
     </div>
   </body>
 

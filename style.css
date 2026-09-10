@@ -146,7 +146,8 @@ button:hover {
   background: var(--btn-hover);
 }
 #resultado,
-#resultadoComLog {
+#resultadoComLog,
+#outSpeechComLog {
   white-space: pre-wrap;
   background: var(--resultado-bg);
   color: var(--text);
