@@ -15,9 +15,13 @@ const campanasPsCache = {};
 // medida que se van tildando kits en el formulario.
 const composicionPorKitId = {};
 
+// Tope de kits que se pueden combinar en una misma venta (ver renderKits()).
+const MAX_KITS_SELECCIONABLES = 2;
+
 const kitsList = document.getElementById("kitsList");
 const dispositivosList = document.getElementById("dispositivosList");
-const resultadoWrap = document.getElementById("resultadoWrap");
+const resultadosWrap = document.querySelector(".presense-resultados");
+const volverBtn = document.getElementById("volver");
 
 // Redondea a 2 decimales y solo los muestra si no son ",00" - mismo criterio
 // que el generador de referencia (los precios PreSense casi siempre son
@@ -102,9 +106,21 @@ function renderKits() {
       <input type="text" class="presense-cant kit-cant" value="1">
     `;
     // Al tildar el kit, se precarga su composición para tenerla lista y
-    // poder usarla de forma síncrona al armar el cuadro en calcular().
+    // poder usarla de forma síncrona al armar el cuadro en calcular(). Como
+    // mucho se pueden combinar 2 kits a la vez: si ya hay 2 tildados, se
+    // bloquea el tercero y se avisa junto al título "Kits".
     row.querySelector(".kit-check").addEventListener("change", (e) => {
-      if (e.target.checked) obtenerComposicion(kit.id);
+      if (!e.target.checked) return;
+
+      const tildados = document.querySelectorAll(".kit-check:checked");
+      if (tildados.length > MAX_KITS_SELECCIONABLES) {
+        e.target.checked = false;
+        mostrarErrorEn(labelKits, `Podés seleccionar como máximo ${MAX_KITS_SELECCIONABLES} kits.`);
+        return;
+      }
+
+      obtenerComposicion(kit.id);
+      limpiarErrorEn(labelKits);
     });
     kitsList.appendChild(row);
   });
@@ -132,6 +148,7 @@ function nuevaFilaDispositivo() {
   `;
   item.querySelector(".btn-eliminar").addEventListener("click", () => item.remove());
   dispositivosList.appendChild(item);
+  limpiarErrorEn(labelKits);
 }
 
 document.getElementById("addDisp").addEventListener("click", () => nuevaFilaDispositivo());
@@ -279,7 +296,163 @@ function generarSpeechPresense(resultadoCalculo) {
   document.getElementById("outSpeechComLog").textContent = textoSpeech;
 }
 
+// ==================== VALIDACIÓN INLINE DE CAMPOS OBLIGATORIOS ====================
+// El mensaje de error se inserta como hermano del propio campo (o del label,
+// para el caso de Kits/Dispositivos que no es un campo puntual), y se
+// reutiliza si ya existe en vez de duplicarlo en cada intento.
+
+function obtenerMensajeError(referencia) {
+  let msg = referencia.nextElementSibling;
+  if (!msg || !msg.classList.contains("mensaje-error-campo")) {
+    msg = document.createElement("span");
+    msg.className = "mensaje-error-campo oculto";
+    referencia.insertAdjacentElement("afterend", msg);
+  }
+  return msg;
+}
+
+function mostrarErrorEn(referencia, mensaje) {
+  const msg = obtenerMensajeError(referencia);
+  msg.textContent = mensaje;
+  msg.classList.remove("oculto");
+}
+
+function limpiarErrorEn(referencia) {
+  const msg = referencia.nextElementSibling;
+  if (msg && msg.classList.contains("mensaje-error-campo")) {
+    msg.classList.add("oculto");
+  }
+}
+
+// Campo puntual (input/select): además del mensaje, resalta el borde.
+function mostrarErrorCampo(el, mensaje) {
+  el.classList.add("campo-error");
+  mostrarErrorEn(el, mensaje);
+}
+
+function limpiarErrorCampo(el) {
+  el.classList.remove("campo-error");
+  limpiarErrorEn(el);
+}
+
+const labelKits = document.getElementById("labelKits");
+
+// Valida los campos obligatorios antes de generar. En vez de un alert(),
+// resalta cada campo inválido con borde rojo + mensaje debajo (ver
+// mostrarErrorCampo/mostrarErrorEn) y hace scroll al primero. El checkbox
+// "¿Fue abonado?" y el de "Ampliación Aparte Dispositivo" de cada fila
+// quedan afuera a propósito: son opcionales.
+function validarCamposPresense() {
+  let primerCampoInvalido = null;
+  const marcar = (el, mensaje) => {
+    mostrarErrorCampo(el, mensaje);
+    if (!primerCampoInvalido) primerCampoInvalido = el;
+  };
+
+  const nroInst = document.getElementById("nroInst");
+  if (nroInst.value.trim()) {
+    limpiarErrorCampo(nroInst);
+  } else {
+    marcar(nroInst, "Este campo es obligatorio.");
+  }
+
+  const zona = document.getElementById("zona");
+  if (zona.value.trim()) {
+    limpiarErrorCampo(zona);
+  } else {
+    marcar(zona, "Este campo es obligatorio.");
+  }
+
+  const fecha = document.getElementById("fecha");
+  if (fecha.value) {
+    limpiarErrorCampo(fecha);
+  } else {
+    marcar(fecha, "Este campo es obligatorio.");
+  }
+
+  const formaPagoEl = document.getElementById("formaPago");
+  if (formaPagoEl.value) {
+    limpiarErrorCampo(formaPagoEl);
+  } else {
+    marcar(formaPagoEl, "Elegí una forma de pago.");
+  }
+
+  const cuotasEl = document.getElementById("cuotasFinanciamiento");
+  if (formaPagoEl.value === "cuotas" && !cuotasEl.value) {
+    marcar(cuotasEl, "Elegí la cantidad de cuotas.");
+  } else {
+    limpiarErrorCampo(cuotasEl);
+  }
+
+  // El input arranca vacío ("") por defecto: hay que diferenciar eso de que
+  // el operador haya tipeado 0 a propósito.
+  const mensualidadVigente = document.getElementById("mensualidadVigente");
+  if (mensualidadVigente.value === "") {
+    marcar(mensualidadVigente, "Este campo es obligatorio (podés ingresar 0).");
+  } else {
+    limpiarErrorCampo(mensualidadVigente);
+  }
+
+  const psCartera = document.getElementById("psCartera");
+  if (psCartera.value) {
+    limpiarErrorCampo(psCartera);
+  } else {
+    marcar(psCartera, "Elegí una cartera.");
+  }
+
+  const psCampana = document.getElementById("psCampana");
+  if (psCampana.value) {
+    limpiarErrorCampo(psCampana);
+  } else {
+    marcar(psCampana, "Elegí una campaña.");
+  }
+
+  const hayKitTildado = document.querySelector(".kit-check:checked");
+  const hayDispositivoAgregado = dispositivosList.children.length > 0;
+  if (hayKitTildado || hayDispositivoAgregado) {
+    limpiarErrorEn(labelKits);
+  } else {
+    mostrarErrorEn(labelKits, "Agregá al menos un kit o un dispositivo.");
+    if (!primerCampoInvalido) primerCampoInvalido = labelKits;
+  }
+
+  if (primerCampoInvalido) {
+    primerCampoInvalido.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+  return true;
+}
+
+// Ni bien el operador corrige un campo puntual, se le saca el error de
+// encima - no hace falta esperar a un nuevo intento de "Generar".
+document.getElementById("nroInst").addEventListener("input", (e) => {
+  if (e.target.value.trim()) limpiarErrorCampo(e.target);
+});
+document.getElementById("zona").addEventListener("input", (e) => {
+  if (e.target.value.trim()) limpiarErrorCampo(e.target);
+});
+document.getElementById("fecha").addEventListener("input", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
+});
+document.getElementById("formaPago").addEventListener("change", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
+});
+document.getElementById("cuotasFinanciamiento").addEventListener("change", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
+});
+document.getElementById("mensualidadVigente").addEventListener("input", (e) => {
+  if (e.target.value !== "") limpiarErrorCampo(e.target);
+});
+document.getElementById("psCartera").addEventListener("change", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
+});
+document.getElementById("psCampana").addEventListener("change", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
+});
+
 document.getElementById("generar").addEventListener("click", () => {
+  if (!validarCamposPresense()) return;
+
   const resultadoCalculo = calcular();
   const { totalSinIva, totalConIva, totalMensual, dispositivosTexto } = resultadoCalculo;
   const formaPago = document.getElementById("formaPago").value;
@@ -289,81 +462,99 @@ document.getElementById("generar").addEventListener("click", () => {
       ? `${formatoMoneda(totalConIva)} abonado en 1 pago`
       : `${formatoMoneda(totalConIva)} en ${cuotas} cuotas`;
 
-  document.getElementById("outNro").textContent = document.getElementById("nroInst").value;
-  document.getElementById("outZona").textContent = document.getElementById("zona").value;
-  document.getElementById("outFecha").textContent = formatearFecha(
-    document.getElementById("fecha").value,
-  );
-  document.getElementById("outUpfrontSin").textContent = formatoMoneda(totalSinIva);
-  document.getElementById("outUpfrontCon").textContent = textoUpfrontCon;
-  document.getElementById("outAbono").textContent = formatoMoneda(totalMensual);
-  document.getElementById("outDispositivos").textContent = dispositivosTexto;
-
-  // Bloque puramente visual/informativo: no afecta ningún cálculo.
-  const fueAbonado = document.getElementById("fueAbonado").checked;
-  const outAvisoAbonado = document.getElementById("outAvisoAbonado");
-  const outAvisoComprobante = document.getElementById("outAvisoComprobante");
-  if (fueAbonado) {
-    outAvisoAbonado.textContent = "El cambio de tecnología ya se encuentra abonado.";
-    outAvisoAbonado.className = "strong abonado";
-    outAvisoComprobante.classList.remove("oculto");
-  } else {
-    outAvisoAbonado.textContent = "El cambio de tecnología no está abonado.";
-    outAvisoAbonado.className = "";
-    outAvisoComprobante.classList.add("oculto");
-  }
+  // Datos del cuadro, para pasarle directo a generarCuerpoMail() - ya no
+  // hay una vista previa del cuadro en pantalla, así que no se pisan nodos
+  // ocultos del DOM como antes.
+  const datosCuadro = {
+    nro: document.getElementById("nroInst").value,
+    zona: document.getElementById("zona").value,
+    fecha: formatearFecha(document.getElementById("fecha").value),
+    upfrontSin: formatoMoneda(totalSinIva),
+    upfrontCon: textoUpfrontCon,
+    abono: formatoMoneda(totalMensual),
+    dispositivosTexto,
+    fueAbonado: document.getElementById("fueAbonado").checked,
+  };
 
   generarSpeechPresense(resultadoCalculo);
+  generarCuerpoMail(datosCuadro);
 
-  resultadoWrap.classList.remove("oculto");
   document.getElementById("resultadoSpeechWrap").classList.remove("oculto");
-  resultadoWrap.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("resultadoCuerpoMailWrap").classList.remove("oculto");
+  volverBtn.classList.remove("oculto");
+  resultadosWrap.scrollIntoView({ behavior: "smooth" });
 });
 
-document.getElementById("volver").addEventListener("click", () => {
-  resultadoWrap.classList.add("oculto");
+volverBtn.addEventListener("click", () => {
   document.getElementById("resultadoSpeechWrap").classList.add("oculto");
+  document.getElementById("resultadoCuerpoMailWrap").classList.add("oculto");
+  volverBtn.classList.add("oculto");
 });
 
-// El HTML que se copia va pegado directo en el cuerpo de un mail de Outlook,
-// que no lee style.css ni sabe nada del tema claro/oscuro de la app - por
-// eso acá sí van estilos inline con los colores de marca hardcodeados
-// (#ED002F / #262626 / #8A8C8E), a diferencia de la vista previa en pantalla
-// de arriba, que usa las clases y variables de tema de style.css.
-document.getElementById("copiarHtml").addEventListener("click", async () => {
-  const fueAbonado = document.getElementById("fueAbonado").checked;
+// El HTML del cuadro va embebido en el cuerpo de mail para pegar directo en
+// Outlook (ver generarCuerpoMail()), que no lee style.css ni sabe nada del
+// tema claro/oscuro de la app - por eso acá van estilos inline con los
+// colores de marca hardcodeados (#ED002F / #262626 / #8A8C8E). Recibe los
+// datos ya formateados en vez de leerlos del DOM: no hay una vista previa
+// propia del cuadro en pantalla, solo se usa embebido.
+function generarHtmlCuadro(datos) {
+  const { nro, zona, fecha, upfrontSin, upfrontCon, abono, dispositivosTexto, fueAbonado } = datos;
+
   const filaAviso = fueAbonado
     ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">EL CAMBIO DE TECNOLOGÍA YA SE ENCUENTRA ABONADO.</span>
       <span style="font-size:13px;">Se adjunta comprobante de pago correspondiente.</span>`
-    : `<span style="font-size:13px;">El cambio de tecnología no está abonado.</span>`;
+    : `<span style="font-size:13px;font-weight:bold;">El cambio de tecnología no está abonado.</span>`;
 
-  const html = `
+  return `
   <table cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;font-family:Arial,sans-serif;border:1px solid #c7c9cb;">
     <tr><td colspan="2" style="padding:14px 18px;border-bottom:3px solid #ED002F;">
       <span style="font-size:11px;letter-spacing:0.04em;color:#AB192D;font-weight:bold;">VERISURE ARGENTINA</span><br>
       <span style="font-size:16px;color:#262626;">Cambio de tecnología · VF a PreSense</span>
     </td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Nro de instalación</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outNro").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Zona</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outZona").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Fecha solicitada</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outFecha").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront sin IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outUpfrontSin").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront con IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outUpfrontCon").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Abono mensual total</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${document.getElementById("outAbono").textContent}</td></tr>
-    <tr><td style="padding:9px 18px;color:#8A8C8E;font-size:14px;">Dispositivos</td><td style="padding:9px 18px;text-align:right;font-size:14px;">${document.getElementById("outDispositivos").textContent}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Nro de instalación</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${nro}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Zona</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${zona}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Fecha solicitada</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${fecha}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront sin IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${upfrontSin}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront con IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${upfrontCon}</td></tr>
+    <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Abono mensual total</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${abono}</td></tr>
+    <tr><td style="padding:9px 18px;color:#8A8C8E;font-size:14px;">Dispositivos</td><td style="padding:9px 18px;text-align:right;font-size:14px;">${dispositivosTexto}</td></tr>
     <tr><td colspan="2" style="padding:12px 18px;background:#f0f1f1;border-left:3px solid #ED002F;">
       ${filaAviso}
     </td></tr>
   </table>`;
+}
 
-  const btn = document.getElementById("copiarHtml");
-  const original = btn.textContent;
+// Arma el cuerpo de mail fijo (saludo + cuadro embebido + cierre), listo
+// para pegar directo en Outlook. El cuadro se inserta como el HTML real
+// (no como texto), reutilizando generarHtmlCuadro() sin volver a armarlo.
+// La línea del comprobante de pago se omite entera (no se reemplaza) si el
+// cambio de tecnología no fue abonado.
+function generarCuerpoMail(datosCuadro) {
+  const cuadroHtml = generarHtmlCuadro(datosCuadro);
+
+  document.getElementById("outCuerpoMail").innerHTML = `
+    <p>Buenas tardes equipo, espero se encuentren bien.</p>
+    <p>En comunicación con el titular, aceptó el cambio de tecnología de VF a PreSense. Adjunto detalle:</p>
+    ${cuadroHtml}
+    <p>Sumamos al equipo de Field para que nos dé prioridad en la instalación.</p>
+    <p>Esto tiene que ser volcado, no cambia ningún dato de SBN. Se conserva el mismo titular.</p>
+    <p>Por favor mantenernos al tanto de la instalación.</p>
+    <p>Saludos.</p>
+  `;
+}
+
+// Copia HTML (no texto plano) al portapapeles, para que al pegar en un
+// editor de mail como Outlook se vea formateado. Compartida entre el botón
+// del cuadro y el del cuerpo de mail completo.
+async function copiarHtmlAlPortapapeles(html, boton) {
+  const original = boton.textContent;
 
   try {
     if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
       const blob = new Blob([html], { type: "text/html" });
       await navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]);
-      btn.textContent = "Copiado ✓";
-      setTimeout(() => (btn.textContent = original), 1800);
+      boton.textContent = "Copiado ✓";
+      setTimeout(() => (boton.textContent = original), 1800);
       return;
     }
     throw new Error("Clipboard API no disponible");
@@ -387,8 +578,8 @@ document.getElementById("copiarHtml").addEventListener("click", async () => {
       document.body.removeChild(temp);
 
       if (ok) {
-        btn.textContent = "Copiado ✓";
-        setTimeout(() => (btn.textContent = original), 1800);
+        boton.textContent = "Copiado ✓";
+        setTimeout(() => (boton.textContent = original), 1800);
       } else {
         throw new Error("execCommand falló");
       }
@@ -398,6 +589,11 @@ document.getElementById("copiarHtml").addEventListener("click", async () => {
       );
     }
   }
+}
+
+document.getElementById("copiarCuerpoMail").addEventListener("click", () => {
+  const html = document.getElementById("outCuerpoMail").innerHTML;
+  copiarHtmlAlPortapapeles(html, document.getElementById("copiarCuerpoMail"));
 });
 
 document.getElementById("copiarSpeechComLog").addEventListener("click", () => {

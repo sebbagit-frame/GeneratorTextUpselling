@@ -198,6 +198,7 @@ function agregarDispositivo() {
     </div>
     <label>Adicional en la cuota (RMR)</label>
     <input class="disp-adicional" type="number" placeholder="0">
+    <small class="texto-ayuda">En caso de sumar cantidad del mismo dispositivo, se suma automáticamente al generar el speech.</small>
     <label style="display:flex;align-items:center;gap:8px;margin-top:10px">
       <input type="checkbox" class="disp-cobrado" style="width:auto">
       Ya abonado (no cobrar esta ampliación)
@@ -210,6 +211,7 @@ function agregarDispositivo() {
 function quitarDispositivo(id) {
   const el = wrap.querySelector(`[data-id="${id}"]`);
   if (el) el.remove();
+  actualizarVisibilidadVisita();
 }
 
 // Repuebla los selects de dispositivo y nivel según la línea elegida
@@ -311,6 +313,7 @@ async function onCambioSeleccion(id) {
   }
 
   calcularIva(id);
+  await actualizarVisibilidadVisita();
 }
 
 function calcularIva(id) {
@@ -339,6 +342,139 @@ function calcularIva(id) {
   const totalSinIva = totalConIva / 1.21;
   el.querySelector(".disp-total-siniva").value = formatoMoneda(totalSinIva);
   el.querySelector(".disp-total-coniva").value = formatoMoneda(totalConIva);
+}
+
+// Dispositivos que, cuando son el ÚNICO agregado a la operación, disparan
+// el caso especial de generarDispositivoSinVisita() en vez del flujo
+// genérico de generar() - se envían por correo, sin visita técnica.
+// "Pack de Llaves" (Verisure) es el único que conserva su texto histórico
+// ("Pack x3 llaves" en Mantenimiento, "Pack x3 Llaves" en ComLog); el resto
+// usa su nombre real de catálogo.
+const DISPOSITIVOS_SIN_VISITA = new Set([
+  "Pack de Llaves",
+  "Mando a Distancia",
+  "Mando a Distancia DUO",
+  "Pack de Llaves (Presense)",
+  "Control Remoto (Presense)",
+  "Control Remoto X2",
+]);
+
+// Fecha de visita / Turno de visita no aplican por defecto a los
+// dispositivos de DISPOSITIVOS_SIN_VISITA (se envían por correo, sin visita
+// técnica): se ocultan mientras ese sea el único dispositivo cargado, salvo
+// que el operador tilde "Ya tiene visita" (ver su listener más abajo). Ese
+// checkbox solo tiene sentido para esos 6 dispositivos, así que se muestra
+// únicamente en ese caso. Se llama cada vez que puede cambiar el único
+// dispositivo de la lista (elegir línea/dispositivo, o quitar una fila) -
+// ver onCambioSeleccion() y quitarDispositivo() - y siempre resetea el
+// checkbox a no marcado, para no arrastrar el estado de un dispositivo
+// anterior.
+async function actualizarVisibilidadVisita() {
+  const items = wrap.querySelectorAll(".dispositivo-item");
+  let esSinVisita = false;
+
+  if (items.length === 1) {
+    const item = await obtenerItemCatalogo(items[0]);
+    const nombreReal = item ? item.nombre.trim() : "";
+    esSinVisita = DISPOSITIVOS_SIN_VISITA.has(nombreReal);
+  }
+
+  document.getElementById("yaTieneVisita").checked = false;
+  document.getElementById("filaYaTieneVisita").classList.toggle("oculto", !esSinVisita);
+  document.getElementById("filaVisita").classList.toggle("oculto", esSinVisita);
+}
+
+// Mientras el checkbox esté visible (dispositivo de DISPOSITIVOS_SIN_VISITA
+// como único agregado), togglea #filaVisita en tiempo real, sin esperar a
+// que se regenere nada.
+document.getElementById("yaTieneVisita").addEventListener("change", (e) => {
+  document.getElementById("filaVisita").classList.toggle("oculto", !e.target.checked);
+});
+
+// Caso especial: alguno de DISPOSITIVOS_SIN_VISITA como ÚNICO dispositivo de
+// la operación (ver el chequeo en generar()). Usa un formato de speech
+// completamente distinto al genérico, sin loop de bloques, sin agrupación
+// de ComLog y sin cierre de operador/matrícula ni "Se pacta visita" (se
+// envía por correo, no se pauta visita técnica). Si el dispositivo se
+// combina con otro, este caso no se activa y se usa el flujo genérico de
+// siempre. usarTextoLlaves es true solo para "Pack de Llaves" (Verisure),
+// que conserva su texto fijo histórico en vez del nombre real.
+async function generarDispositivoSinVisita(
+  el,
+  { prefijo, tipoPago, cuotas, fraseTipoPago, nombreReal, usarTextoLlaves },
+) {
+  const cantidad = parseInt(el.querySelector(".disp-cantidad").value) || 1;
+  const valConIva = parseFloat(el.querySelector(".disp-valor-coniva").value) || 0;
+  const totalConIva = valConIva * cantidad;
+  const totalSinIva = totalConIva / 1.21;
+  const cobrado = el.querySelector(".disp-cobrado").checked;
+
+  // Texto legible del medio de pago elegido, usado tanto en el cierre de
+  // Mantenimiento ("Ya abonado ...") como en la aclaración de cobro del
+  // ComLog, más abajo.
+  let tipoPagoTexto;
+  if (tipoPago === "transferencia") {
+    tipoPagoTexto = "transferencia";
+  } else if (tipoPago === "tarjeta") {
+    tipoPagoTexto = "tarjeta de crédito Visa/MasterCard";
+  } else {
+    tipoPagoTexto = `${cuotas} cuotas`;
+  }
+
+  // ---- Mantenimiento ----
+  // A diferencia del flujo genérico (que envuelve el bloque entre
+  // ***NO COBRAR AMPLIACIÓN YA ABONADA***), acá "Ya abonado" va como cierre
+  // del texto, aclarando el medio de pago.
+  const nombreMantenimiento = usarTextoLlaves ? "Pack x3 llaves" : nombreReal;
+  let texto = `${prefijo} Ampliación ${cantidad} ${nombreMantenimiento} valor sin iva: $${formatoMoneda(totalSinIva)} valor con iva: $${formatoMoneda(totalConIva)} ${fraseTipoPago}`;
+  if (cobrado) {
+    texto += ` Ya abonado ${tipoPagoTexto}.`;
+  }
+  document.getElementById("resultado").textContent = texto;
+
+  // ---- ComLog ----
+  // La apertura depende de si la campaña elegida es de llamada entrante o
+  // saliente; "saliente" (o cualquier otro nombre que no matchee) usa el
+  // mismo texto por defecto. Solo Pack de Llaves menciona "de llaves": para
+  // el resto de los dispositivos queda genérica.
+  const campana = CAMPANAS[selCampana.value];
+  const nombreCampana = campana ? campana.nombre.toLowerCase() : "";
+  const esEntrante = nombreCampana.includes("entrante");
+  const apertura = usarTextoLlaves
+    ? esEntrante
+      ? "Recibo llamado con TT por ampliación de llaves"
+      : "Me comunico con TT por ampliación de llaves"
+    : esEntrante
+      ? "Recibo llamado con TT por ampliación"
+      : "Me comunico con TT por ampliación";
+
+  const aclaracionCobro = cobrado
+    ? `Ya fue abonado, medio de pago: ${tipoPagoTexto}`
+    : `Se cobra en línea, medio de pago: ${tipoPagoTexto}`;
+
+  const comentarios =
+    document.getElementById("comentariosAdicionales").value || "-";
+
+  // Si el operador tildó "Ya tiene visita", se agrega una línea extra con
+  // fecha/turno (mismos campos de #filaVisita, que en ese caso vuelve a
+  // estar visible). El Mantenimiento no se ve afectado por este checkbox.
+  let lineaVisita = "";
+  if (document.getElementById("yaTieneVisita").checked) {
+    const fechaFormateada = formatearFecha(
+      document.getElementById("fechaVisita").value,
+    );
+    const turnoSeleccionado = TURNOS.find(
+      (t) => String(t.id) === selTurnoHorario.value,
+    );
+    const horaDesde = turnoSeleccionado ? turnoSeleccionado.horaInicio : "-";
+    const horaHasta = turnoSeleccionado ? turnoSeleccionado.horaFin : "-";
+    lineaVisita = `\nSe suma visita para: ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs.`;
+  }
+
+  const nombreComLog = usarTextoLlaves ? "Pack x3 Llaves" : nombreReal;
+  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}. Se envía por correo.${lineaVisita}\n\nComentarios adicionales: ${comentarios}`;
+
+  document.getElementById("resultadoComLog").textContent = textoComLog;
 }
 
 async function generar() {
@@ -374,6 +510,25 @@ async function generar() {
     fraseTipoPago = "Todo en 1 pago con TC Visa/MasterCard.";
   } else {
     fraseTipoPago = `Todo en ${cuotas} cuotas con tarjeta de crédito visa/MasterCard Bancaria.`;
+  }
+
+  // Caso especial: alguno de DISPOSITIVOS_SIN_VISITA como único dispositivo
+  // de la operación (ver generarDispositivoSinVisita()). Si se cumple,
+  // reemplaza TODO el flujo genérico de abajo para ambos textos.
+  if (items.length === 1) {
+    const item = await obtenerItemCatalogo(items[0]);
+    const nombreReal = item ? item.nombre.trim() : "";
+    if (DISPOSITIVOS_SIN_VISITA.has(nombreReal)) {
+      await generarDispositivoSinVisita(items[0], {
+        prefijo,
+        tipoPago,
+        cuotas,
+        fraseTipoPago,
+        nombreReal,
+        usarTextoLlaves: nombreReal === "Pack de Llaves",
+      });
+      return;
+    }
   }
 
   const bloques = [];

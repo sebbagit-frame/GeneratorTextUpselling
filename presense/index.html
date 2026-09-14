@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="icon" href="../src/image/favicon.svg" type="image/svg+xml" />
   </head>
-  <body data-theme="light">
+  <body data-theme="light" class="presense-page">
     <button id="themeToggle" aria-label="Cambiar tema">🌙</button>
 
     <h2>Generador PreSense - Cambio de Tecnología</h2>
@@ -69,7 +69,7 @@
     </div>
 
     <div class="card">
-      <label>Kits</label>
+      <label id="labelKits">Kits</label>
       <div id="kitsList"></div>
     </div>
 
@@ -81,61 +81,21 @@
 
     <button type="button" id="generar">Generar cuadro</button>
 
-    <div class="card oculto" id="resultadoWrap">
-      <div class="presense-cuadro">
-        <div class="presense-cuadro-head">
-          <p class="presense-eyebrow">Verisure Argentina</p>
-          <h3>Cambio de tecnología · VF a PreSense</h3>
-        </div>
-        <div class="presense-cuadro-body">
-          <table class="presense-datos">
-            <tr>
-              <td>Nro de instalación</td>
-              <td id="outNro"></td>
-            </tr>
-            <tr>
-              <td>Zona</td>
-              <td id="outZona"></td>
-            </tr>
-            <tr>
-              <td>Fecha solicitada</td>
-              <td id="outFecha"></td>
-            </tr>
-            <tr>
-              <td>Upfront sin IVA</td>
-              <td id="outUpfrontSin"></td>
-            </tr>
-            <tr>
-              <td>Upfront con IVA</td>
-              <td id="outUpfrontCon"></td>
-            </tr>
-            <tr>
-              <td>Abono mensual total</td>
-              <td id="outAbono"></td>
-            </tr>
-            <tr>
-              <td>Dispositivos</td>
-              <td id="outDispositivos"></td>
-            </tr>
-          </table>
-          <div class="presense-aviso">
-            <p class="strong" id="outAvisoAbonado">El cambio de tecnología ya se encuentra abonado.</p>
-            <p id="outAvisoComprobante">Se adjunta comprobante de pago correspondiente.</p>
-          </div>
-        </div>
+    <div class="presense-resultados">
+      <div class="card oculto" id="resultadoSpeechWrap">
+        <label>Speech ComLog</label>
+        <div id="outSpeechComLog" contenteditable="true">-</div>
+        <button class="copiar" id="copiarSpeechComLog">Copiar</button>
       </div>
 
-      <button type="button" class="secundario" id="copiarHtml">
-        Copiar cuadro para el mail
-      </button>
-      <button type="button" class="secundario" id="volver">Editar datos</button>
+      <div class="card oculto" id="resultadoCuerpoMailWrap">
+        <label>MAIL + CUADRO</label>
+        <div id="outCuerpoMail" contenteditable="true">-</div>
+        <button class="copiar" id="copiarCuerpoMail">Copiar</button>
+      </div>
     </div>
 
-    <div class="card oculto" id="resultadoSpeechWrap">
-      <label>Speech ComLog</label>
-      <div id="outSpeechComLog" contenteditable="true">-</div>
-      <button class="copiar" id="copiarSpeechComLog">Copiar</button>
-    </div>
+    <button type="button" class="secundario oculto" id="volver">Editar datos</button>
   </body>
 
   <script type="module" src="../src/theme.js"></script>
