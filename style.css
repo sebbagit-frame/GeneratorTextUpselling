@@ -20,6 +20,7 @@
   --editar-bg: #4a5568;
   --secundario-bg: #718096;
   --aviso-color: #c53030;
+  --link-color: #245a94;
 }
 
 [data-theme="dark"] {
@@ -44,6 +45,7 @@
   --editar-bg: #5a6478;
   --secundario-bg: #7d8aa0;
   --aviso-color: #ff8080;
+  --link-color: #ffffff;
 }
 
 body {
@@ -64,6 +66,9 @@ body.admin-page {
 h2 {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text-heading);
+}
+a {
+  color: var(--link-color);
 }
 .card {
   background: var(--card-bg);
