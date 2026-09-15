@@ -369,6 +369,8 @@ const DISPOSITIVOS_SIN_VISITA = new Set([
 // ver onCambioSeleccion() y quitarDispositivo() - y siempre resetea el
 // checkbox a no marcado, para no arrastrar el estado de un dispositivo
 // anterior.
+let esDispositivoSinVisita = false;
+
 async function actualizarVisibilidadVisita() {
   const items = wrap.querySelectorAll(".dispositivo-item");
   let esSinVisita = false;
@@ -379,17 +381,27 @@ async function actualizarVisibilidadVisita() {
     esSinVisita = DISPOSITIVOS_SIN_VISITA.has(nombreReal);
   }
 
+  esDispositivoSinVisita = esSinVisita;
   document.getElementById("yaTieneVisita").checked = false;
   document.getElementById("filaYaTieneVisita").classList.toggle("oculto", !esSinVisita);
-  document.getElementById("filaVisita").classList.toggle("oculto", esSinVisita);
+  refrescarFilaVisita();
 }
 
-// Mientras el checkbox esté visible (dispositivo de DISPOSITIVOS_SIN_VISITA
-// como único agregado), togglea #filaVisita en tiempo real, sin esperar a
-// que se regenere nada.
-document.getElementById("yaTieneVisita").addEventListener("change", (e) => {
-  document.getElementById("filaVisita").classList.toggle("oculto", !e.target.checked);
-});
+// Fuente única de verdad para la visibilidad de #filaVisita: "No se pactó
+// visita" tiene PRIORIDAD sobre todo lo demás (incluido "Ya tiene visita",
+// caso límite si ambos quedaran marcados a la vez) y la oculta siempre que
+// esté tildado. Si no está tildado, se vuelve al comportamiento previo:
+// oculta para los 6 dispositivos especiales salvo que "Ya tiene visita"
+// esté marcado.
+function refrescarFilaVisita() {
+  const noSePactoVisita = document.getElementById("noSePactoVisita").checked;
+  const yaTieneVisita = document.getElementById("yaTieneVisita").checked;
+  const visible = !noSePactoVisita && (!esDispositivoSinVisita || yaTieneVisita);
+  document.getElementById("filaVisita").classList.toggle("oculto", !visible);
+}
+
+document.getElementById("yaTieneVisita").addEventListener("change", refrescarFilaVisita);
+document.getElementById("noSePactoVisita").addEventListener("change", refrescarFilaVisita);
 
 // Caso especial: alguno de DISPOSITIVOS_SIN_VISITA como ÚNICO dispositivo de
 // la operación (ver el chequeo en generar()). Usa un formato de speech
@@ -458,8 +470,11 @@ async function generarDispositivoSinVisita(
   // Si el operador tildó "Ya tiene visita", se agrega una línea extra con
   // fecha/turno (mismos campos de #filaVisita, que en ese caso vuelve a
   // estar visible). El Mantenimiento no se ve afectado por este checkbox.
+  // "No se pactó visita" tiene prioridad: si está tildado, se suprime esta
+  // línea aunque "Ya tiene visita" también lo esté.
   let lineaVisita = "";
-  if (document.getElementById("yaTieneVisita").checked) {
+  const noSePactoVisitaSinVisita = document.getElementById("noSePactoVisita").checked;
+  if (!noSePactoVisitaSinVisita && document.getElementById("yaTieneVisita").checked) {
     const fechaFormateada = formatearFecha(
       document.getElementById("fechaVisita").value,
     );
@@ -468,11 +483,11 @@ async function generarDispositivoSinVisita(
     );
     const horaDesde = turnoSeleccionado ? turnoSeleccionado.horaInicio : "-";
     const horaHasta = turnoSeleccionado ? turnoSeleccionado.horaFin : "-";
-    lineaVisita = `\nSe suma visita para: ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs.`;
+    lineaVisita = `\n Se suma visita para: ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs.`;
   }
 
   const nombreComLog = usarTextoLlaves ? "Pack x3 Llaves" : nombreReal;
-  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}. Se envía por correo.${lineaVisita}\n\nComentarios adicionales: ${comentarios}`;
+  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}. Se envía por correo.${lineaVisita}\n \n Comentarios adicionales: ${comentarios}`;
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
 }
@@ -539,11 +554,13 @@ async function generar() {
   const todosCobrados = Array.from(items).every(
     (el) => el.querySelector(".disp-cobrado").checked,
   );
+  const algunCobrado = Array.from(items).some(
+    (el) => el.querySelector(".disp-cobrado").checked,
+  );
 
   // ---- ComLog: se arma en paralelo al texto de Mantenimiento, agrupando
   // los dispositivos por nombre (no por fila). ----
   const gruposComLog = new Map();
-  let esAbonado = false;
 
   for (const [index, el] of items.entries()) {
     const item = await obtenerItemCatalogo(el);
@@ -558,9 +575,15 @@ async function generar() {
     const totalSinIva = totalConIva / 1.21;
     const adicionalItem = adicional * cantidad;
 
-    // Acumula por nombre de dispositivo para el speech de ComLog (que agrupa
-    // filas repetidas), y detecta si alguna fila está marcada como abonada.
-    const grupo = gruposComLog.get(nombre) || {
+    // Acumula por nombre de dispositivo + estado abonado para el speech de
+    // ComLog (que agrupa filas repetidas). Se agrupa también por "abonado"
+    // para que una fila abonada y otra no del mismo dispositivo no se
+    // mezclen en una sola línea ambigua.
+    const cobrado = el.querySelector(".disp-cobrado").checked;
+    const claveGrupo = `${nombre}||${cobrado}`;
+    const grupo = gruposComLog.get(claveGrupo) || {
+      nombre,
+      abonado: cobrado,
       cantidad: 0,
       sumaConIva: 0,
       sumaAdicional: 0,
@@ -568,11 +591,7 @@ async function generar() {
     grupo.cantidad += cantidad;
     grupo.sumaConIva += totalConIva;
     grupo.sumaAdicional += adicionalItem;
-    gruposComLog.set(nombre, grupo);
-
-    if (el.querySelector(".disp-cobrado").checked) {
-      esAbonado = true;
-    }
+    gruposComLog.set(claveGrupo, grupo);
 
     // Adicional (RMR) + plan de las cámaras Arlo, ahora por dispositivo en
     // vez de acumulado en un total global.
@@ -589,8 +608,14 @@ async function generar() {
       bloque += ` TT recibirá al técnico en el domicilio.-Mtr_ ${operador.matricula}.`;
     }
 
-    if (el.querySelector(".disp-cobrado").checked && !todosCobrados) {
-      bloque = `***NO COBRAR AMPLIACIÓN YA ABONADA***${bloque}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+    if (cobrado && !todosCobrados) {
+      bloque = `***NO COBRAR AMPLIACIÓN YA ABONADA***  ${bloque}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+    } else if (!cobrado && algunCobrado) {
+      // Caso mixto: este dispositivo no está abonado, pero algún otro sí -
+      // se aclara que este en particular se abona en el momento de la
+      // visita, sin el marcador de asteriscos (ese es solo para los que ya
+      // están pagos).
+      bloque = `AMPLIACIÓN POR ABONAR EN EL MOMENTO DE LA VISITA: ${bloque}`;
     }
 
     bloques.push(bloque);
@@ -598,7 +623,7 @@ async function generar() {
 
   let cuerpo = bloques.join(" // ");
   if (todosCobrados) {
-    cuerpo = `***NO COBRAR AMPLIACIÓN YA ABONADA***${cuerpo}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+    cuerpo = `***NO COBRAR AMPLIACIÓN YA ABONADA***(COLOCAR ESTE IMPORTE EN EL PARTE DIGITAL) ${cuerpo}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
   }
   const texto = `${prefijo} ${cuerpo}`;
 
@@ -606,12 +631,16 @@ async function generar() {
 
   // ---- Armado del texto de ComLog ----
   const campana = CAMPANAS[selCampana.value];
-  const lineasDispositivos = Array.from(gruposComLog.entries())
+  // El sufijo ", Ya abonado" por línea se omite cuando todosCobrados es
+  // true: en ese caso la info ya queda cubierta una sola vez por "TODO ya
+  // abonado" en el cierre, más abajo, y repetirla por dispositivo sería
+  // duplicar el mismo dato.
+  const lineasDispositivos = Array.from(gruposComLog.values())
     .map(
-      ([nombreGrupo, grupo]) =>
-        `Ampliación de ${grupo.cantidad} ${nombreGrupo} valor final: $${formatoMoneda(grupo.sumaConIva)} adicional mensual: $${formatoMoneda(grupo.sumaAdicional)}`,
+      (grupo) =>
+        `Ampliación de ${grupo.cantidad} ${grupo.nombre} valor final: $${formatoMoneda(grupo.sumaConIva)} adicional mensual: $${formatoMoneda(grupo.sumaAdicional)}${grupo.abonado && !todosCobrados ? ", Ya abonado" : ""}`,
     )
-    .join("\n");
+    .join("\n ");
 
   const fechaFormateada = formatearFecha(
     document.getElementById("fechaVisita").value,
@@ -624,8 +653,16 @@ async function generar() {
   const comentarios =
     document.getElementById("comentariosAdicionales").value || "-";
 
+  // "No se pactó visita" tiene prioridad: reemplaza toda la línea de fecha
+  // y turno, conservando la mención de abonado si corresponde (es info de
+  // pago, independiente de si hubo visita o no).
+  const noSePactoVisitaGenerico = document.getElementById("noSePactoVisita").checked;
+  const lineaVisitaGenerico = noSePactoVisitaGenerico
+    ? `No se pactó visita${todosCobrados ? ", TODO ya abonado" : ""}.`
+    : `Se pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${todosCobrados ? ", TODO ya abonado" : ""}.`;
+
   const textoComLog = campana
-    ? `${prefijo} ${campana.textoApertura}\n\n${lineasDispositivos}\n${fraseTipoPago}\nSe pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${esAbonado ? ", Ya abonado" : ""}.\n\nComentarios adicionales: ${comentarios}`
+    ? `${prefijo} ${campana.textoApertura}\n \n ${lineasDispositivos}\n ${fraseTipoPago}\n ${lineaVisitaGenerico}\n \n Comentarios adicionales: ${comentarios}`
     : "-";
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
