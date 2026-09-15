@@ -22,6 +22,8 @@ const selTurnoHorario = document.getElementById("turnoHorario");
 const selCuotas = document.getElementById("cuotas");
 const opcionesCuotas = [3, 6, 12];
 
+agregarPlaceholder(selCuotas);
+
 opcionesCuotas.forEach((cuota) => {
   const opt = document.createElement("option");
   opt.value = cuota;
@@ -34,12 +36,35 @@ document.getElementById("tipoPago").addEventListener("change", (e) => {
   document
     .getElementById("cuotasWrap")
     .classList.toggle("oculto", e.target.value !== "financiado");
+  limpiarErrorCampo(e.target);
+});
+
+// Ni bien el operador corrige un campo global, se le saca el error de
+// encima - no hace falta esperar a un nuevo intento de "Generar Speech".
+selCartera.addEventListener("change", (e) => limpiarErrorCampo(e.target));
+selCuotas.addEventListener("change", (e) => limpiarErrorCampo(e.target));
+selOperador.addEventListener("change", (e) => limpiarErrorCampo(e.target));
+selCampana.addEventListener("change", (e) => limpiarErrorCampo(e.target));
+selTurnoHorario.addEventListener("change", (e) => limpiarErrorCampo(e.target));
+document.getElementById("fechaVisita").addEventListener("input", (e) => {
+  if (e.target.value) limpiarErrorCampo(e.target);
 });
 
 // Repuebla el select de Campaña según la cartera elegida (mismo patrón que
 // Línea→Dispositivo).
 async function cargarCampanas() {
   const cartera = selCartera.value;
+
+  selCampana.innerHTML = "";
+
+  // Sin cartera elegida todavía (arranca en placeholder) no hay nada que
+  // pedirle al backend - se deja el select en su propio placeholder hasta
+  // que el operador elija una cartera real.
+  if (!cartera) {
+    CAMPANAS = [];
+    agregarPlaceholder(selCampana);
+    return;
+  }
 
   if (!campanasCache[cartera]) {
     try {
@@ -51,7 +76,7 @@ async function cargarCampanas() {
   }
 
   CAMPANAS = campanasCache[cartera];
-  selCampana.innerHTML = "";
+  agregarPlaceholder(selCampana);
   CAMPANAS.forEach((campana, i) => {
     const opt = document.createElement("option");
     opt.value = i;
@@ -74,12 +99,64 @@ async function cargarTurnosHorarios() {
   }
 
   selTurnoHorario.innerHTML = "";
+  agregarPlaceholder(selTurnoHorario);
   TURNOS.forEach((turno) => {
     const opt = document.createElement("option");
     opt.value = turno.id;
     opt.textContent = `${turno.horaInicio} - ${turno.horaFin}`;
     selTurnoHorario.appendChild(opt);
   });
+}
+
+// Inserta la opción placeholder "Seleccionar..." como primer hijo de un
+// select, sin que quede seleccionable de nuevo una vez elegida otra opción
+// (que el operador siempre arranque en blanco, en vez de autoseleccionar
+// el primer ítem real).
+function agregarPlaceholder(select, texto = "Seleccionar...") {
+  const opt = document.createElement("option");
+  opt.value = "";
+  opt.textContent = texto;
+  opt.disabled = true;
+  opt.selected = true;
+  select.appendChild(opt);
+}
+
+// ==================== VALIDACIÓN INLINE DE CAMPOS OBLIGATORIOS ====================
+// Mismo patrón que presense.js: el mensaje de error se inserta como
+// hermano del propio campo, y se reutiliza si ya existe en vez de
+// duplicarlo en cada intento.
+
+function obtenerMensajeError(referencia) {
+  let msg = referencia.nextElementSibling;
+  if (!msg || !msg.classList.contains("mensaje-error-campo")) {
+    msg = document.createElement("span");
+    msg.className = "mensaje-error-campo oculto";
+    referencia.insertAdjacentElement("afterend", msg);
+  }
+  return msg;
+}
+
+function mostrarErrorEn(referencia, mensaje) {
+  const msg = obtenerMensajeError(referencia);
+  msg.textContent = mensaje;
+  msg.classList.remove("oculto");
+}
+
+function limpiarErrorEn(referencia) {
+  const msg = referencia.nextElementSibling;
+  if (msg && msg.classList.contains("mensaje-error-campo")) {
+    msg.classList.add("oculto");
+  }
+}
+
+function mostrarErrorCampo(el, mensaje) {
+  el.classList.add("campo-error");
+  mostrarErrorEn(el, mensaje);
+}
+
+function limpiarErrorCampo(el) {
+  el.classList.remove("campo-error");
+  limpiarErrorEn(el);
 }
 
 function formatoMoneda(num) {
@@ -155,23 +232,23 @@ function agregarDispositivo() {
     <button type="button" class="quitar" onclick="quitarDispositivo(${id})">x</button>
     <label>Línea</label>
     <select class="disp-linea" onchange="onCambioLinea(${id})">
+      <option value="" disabled selected>Seleccionar...</option>
       <option value="verisure">Verifast</option>
       <option value="presense">Presense</option>
     </select>
     <label>Dispositivo</label>
-    <select class="disp-dispositivo" onchange="onCambioSeleccion(${id})"></select>
+    <select class="disp-dispositivo" onchange="onCambioSeleccion(${id})">
+      <option value="" disabled selected>Elegí primero una línea</option>
+    </select>
     <label>Nivel de precio</label>
     <select class="disp-nivel" onchange="onCambioSeleccion(${id})">
-      <option value="Alto">Alto</option>
-      <option value="Medio">Medio</option>
-      <option value="Bajo">Bajo</option>
-      <option value="Financiado">Financiado</option>
-      <option value="Promo 50%">Promo 50%</option>
+      <option value="" disabled selected>Elegí primero una línea</option>
     </select>
     <div class="disp-aviso oculto">No disponible para esta línea</div>
     <div class="disp-plazo-wrap oculto">
       <label>Plazo de grabación</label>
       <select class="disp-plazo" onchange="calcularIva(${id})">
+        <option value="" disabled selected>Seleccionar...</option>
         <option value="3">3 días</option>
         <option value="7">7 días</option>
         <option value="14">14 días</option>
@@ -183,7 +260,7 @@ function agregarDispositivo() {
         <label>Cantidad</label>
         <input class="disp-cantidad" type="number" value="1" min="1" oninput="calcularIva(${id})">
       </div>
-      <div>
+      <div class="oculto">
         <label>Valor con IVA (unitario)</label>
         <input class="disp-valor-coniva" type="number" placeholder="0" oninput="calcularIva(${id})">
       </div>
@@ -205,7 +282,12 @@ function agregarDispositivo() {
     </label>
   `;
   wrap.appendChild(div);
-  return onCambioLinea(id);
+  // A diferencia de antes, ya no se dispara onCambioLinea() automáticamente
+  // acá: Dispositivo y Nivel arrancan en su propio placeholder hasta que el
+  // operador elija una Línea real (ver onCambioLinea()). Sí hace falta
+  // recalcular la visibilidad de Fecha/Turno de visita, por si esta fila
+  // nueva cambia si hay o no un único dispositivo cargado.
+  return actualizarVisibilidadVisita();
 }
 
 function quitarDispositivo(id) {
@@ -214,12 +296,17 @@ function quitarDispositivo(id) {
   actualizarVisibilidadVisita();
 }
 
-// Repuebla los selects de dispositivo y nivel según la línea elegida
+// Repuebla los selects de dispositivo y nivel según la línea elegida.
+// Ambos arrancan de nuevo en su propio placeholder (no autoseleccionan el
+// primer ítem real) - el operador tiene que elegirlos a propósito.
 async function onCambioLinea(id) {
   const el = wrap.querySelector(`[data-id="${id}"]`);
-  const linea = el.querySelector(".disp-linea").value;
+  const selLinea = el.querySelector(".disp-linea");
+  const linea = selLinea.value;
   const selDispositivo = el.querySelector(".disp-dispositivo");
   const selNivel = el.querySelector(".disp-nivel");
+
+  limpiarErrorCampo(selLinea);
 
   let catalogo;
   try {
@@ -233,6 +320,7 @@ async function onCambioLinea(id) {
   }
 
   selDispositivo.innerHTML = "";
+  agregarPlaceholder(selDispositivo);
   catalogo.forEach((item) => {
     const opt = document.createElement("option");
     opt.value = item.id;
@@ -241,6 +329,7 @@ async function onCambioLinea(id) {
   });
 
   selNivel.innerHTML = "";
+  agregarPlaceholder(selNivel);
   obtenerNiveles(linea).forEach((nivel) => {
     const opt = document.createElement("option");
     opt.value = nivel.value;
@@ -264,13 +353,21 @@ async function obtenerItemCatalogo(el) {
 async function onCambioSeleccion(id) {
   const el = wrap.querySelector(`[data-id="${id}"]`);
   const linea = el.querySelector(".disp-linea").value;
+  const selDispositivo = el.querySelector(".disp-dispositivo");
+  const selNivel = el.querySelector(".disp-nivel");
   const item = await obtenerItemCatalogo(el);
-  const nivel = el.querySelector(".disp-nivel").value;
+  const nivel = selNivel.value;
   const nivelInfo = obtenerNiveles(linea).find((n) => n.value === nivel);
   const inputValor = el.querySelector(".disp-valor-coniva");
   const aviso = el.querySelector(".disp-aviso");
 
-  const valorSinIva = item ? item[nivelInfo.campo] : null;
+  limpiarErrorCampo(selDispositivo);
+  limpiarErrorCampo(selNivel);
+
+  // Puede dispararse con el Nivel todavía en placeholder (recién se eligió
+  // Dispositivo) - se trata igual que "no disponible" hasta que se elija
+  // también un nivel real, sin intentar leer nivelInfo.campo si no existe.
+  const valorSinIva = item && nivelInfo ? item[nivelInfo.campo] : null;
 
   if (valorSinIva === null || valorSinIva === undefined) {
     inputValor.value = "";
@@ -323,7 +420,9 @@ function calcularIva(id) {
   // la cuota se recalcula según el plazo de grabación elegido, antes de
   // seguir con los cálculos de totales de siempre.
   if (el.dataset.tipoPlan) {
-    const plazo = el.querySelector(".disp-plazo").value;
+    const selPlazo = el.querySelector(".disp-plazo");
+    limpiarErrorCampo(selPlazo);
+    const plazo = selPlazo.value;
     const rmr = el.dataset[`rmr${plazo}dias`];
     el.querySelector(".disp-adicional").value = rmr || "";
   }
@@ -483,7 +582,7 @@ async function generarDispositivoSinVisita(
     );
     const horaDesde = turnoSeleccionado ? turnoSeleccionado.horaInicio : "-";
     const horaHasta = turnoSeleccionado ? turnoSeleccionado.horaFin : "-";
-    lineaVisita = `\n Se suma visita para: ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs.`;
+    lineaVisita = `\n Se coordina visita para: ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs.`;
   }
 
   const nombreComLog = usarTextoLlaves ? "Pack x3 Llaves" : nombreReal;
@@ -492,7 +591,120 @@ async function generarDispositivoSinVisita(
   document.getElementById("resultadoComLog").textContent = textoComLog;
 }
 
+// Valida los campos obligatorios antes de generar. Mismo criterio que ya
+// usa presense.js: en vez de alert(), resalta cada campo inválido con
+// borde rojo + mensaje debajo (mostrarErrorCampo/limpiarErrorCampo) y hace
+// scroll suave al primero. Los checkboxes quedan afuera a propósito - son
+// opcionales. Fecha/Turno de visita solo se validan si #filaVisita está
+// visible (puede estar oculta por "No se pactó visita" o por ser uno de
+// los 6 dispositivos especiales sin "Ya tiene visita" tildado).
+function validarCamposMain() {
+  let primerCampoInvalido = null;
+  const marcar = (el, mensaje) => {
+    mostrarErrorCampo(el, mensaje);
+    if (!primerCampoInvalido) primerCampoInvalido = el;
+  };
+
+  wrap.querySelectorAll(".dispositivo-item").forEach((el) => {
+    const selLinea = el.querySelector(".disp-linea");
+    if (selLinea.value) {
+      limpiarErrorCampo(selLinea);
+    } else {
+      marcar(selLinea, "Elegí una línea.");
+    }
+
+    const selDispositivo = el.querySelector(".disp-dispositivo");
+    if (selDispositivo.value) {
+      limpiarErrorCampo(selDispositivo);
+    } else {
+      marcar(selDispositivo, "Elegí un dispositivo.");
+    }
+
+    const selNivel = el.querySelector(".disp-nivel");
+    if (selNivel.value) {
+      limpiarErrorCampo(selNivel);
+    } else {
+      marcar(selNivel, "Elegí un nivel de precio.");
+    }
+
+    const plazoVisible = !el
+      .querySelector(".disp-plazo-wrap")
+      .classList.contains("oculto");
+    const selPlazo = el.querySelector(".disp-plazo");
+    if (!plazoVisible) {
+      limpiarErrorCampo(selPlazo);
+    } else if (selPlazo.value) {
+      limpiarErrorCampo(selPlazo);
+    } else {
+      marcar(selPlazo, "Elegí un plazo de grabación.");
+    }
+  });
+
+  const cartera = document.getElementById("cartera");
+  if (cartera.value) {
+    limpiarErrorCampo(cartera);
+  } else {
+    marcar(cartera, "Elegí una cartera.");
+  }
+
+  const tipoPago = document.getElementById("tipoPago");
+  if (tipoPago.value) {
+    limpiarErrorCampo(tipoPago);
+  } else {
+    marcar(tipoPago, "Elegí un tipo de pago.");
+  }
+
+  if (tipoPago.value !== "financiado") {
+    limpiarErrorCampo(selCuotas);
+  } else if (selCuotas.value) {
+    limpiarErrorCampo(selCuotas);
+  } else {
+    marcar(selCuotas, "Elegí la cantidad de cuotas.");
+  }
+
+  if (selOperador.value) {
+    limpiarErrorCampo(selOperador);
+  } else {
+    marcar(selOperador, "Elegí un operador.");
+  }
+
+  if (selCampana.value) {
+    limpiarErrorCampo(selCampana);
+  } else {
+    marcar(selCampana, "Elegí una campaña.");
+  }
+
+  const filaVisitaVisible = !document
+    .getElementById("filaVisita")
+    .classList.contains("oculto");
+  const fechaVisita = document.getElementById("fechaVisita");
+  if (!filaVisitaVisible) {
+    limpiarErrorCampo(fechaVisita);
+    limpiarErrorCampo(selTurnoHorario);
+  } else {
+    if (fechaVisita.value) {
+      limpiarErrorCampo(fechaVisita);
+    } else {
+      marcar(fechaVisita, "Este campo es obligatorio.");
+    }
+
+    if (selTurnoHorario.value) {
+      limpiarErrorCampo(selTurnoHorario);
+    } else {
+      marcar(selTurnoHorario, "Elegí un turno.");
+    }
+  }
+
+  if (primerCampoInvalido) {
+    primerCampoInvalido.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+  return true;
+}
+
 async function generar() {
+  if (!validarCamposMain()) return;
+
   const items = wrap.querySelectorAll(".dispositivo-item");
 
   // Validar que ningún dispositivo tenga el valor deshabilitado o vacío
@@ -705,6 +917,7 @@ async function init() {
   }
 
   selOperador.innerHTML = "";
+  agregarPlaceholder(selOperador);
   OPERADORES.forEach((op, i) => {
     const opt = document.createElement("option");
     opt.value = i;

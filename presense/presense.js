@@ -40,6 +40,15 @@ function formatoMoneda(num) {
   );
 }
 
+// Fragmento de "adicional mensual" para una línea del ComLog: si el monto
+// es 0 (o null, que al multiplicarse por cantidad da 0 igual), se aclara
+// "Sin adicional mensual" en vez de mostrar "adicional mensual: $0".
+function sufijoAdicionalMensual(monto) {
+  return monto > 0
+    ? ` adicional mensual: ${formatoMoneda(monto)}`
+    : ". Sin adicional mensual";
+}
+
 // Convierte el valor de un <input type="date"> (yyyy-mm-dd) a "DD/MM/AAAA".
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "";
@@ -163,8 +172,28 @@ function calcular() {
   let totalSinIva = 0;
   let totalConIva = 0;
   let totalMensual = 0;
-  const partes = [];
   let hayKitSeleccionado = false;
+
+  // Lista de dispositivos para el cuadro/mail, agrupando por nombre (kit +
+  // adicionales) en vez de listar cada origen por separado. Un dispositivo
+  // adicional marcado "Ampliación Aparte" NUNCA se combina con un item de
+  // la composición del kit que tenga el mismo nombre (es una venta aparte,
+  // tiene que quedar visible como entrada propia) - pero sin el texto
+  // "(ampliación aparte)", como cualquier otro item de la lista.
+  const itemsDispositivos = [];
+  const indicePorNombre = new Map();
+  const nombresDeComposicion = new Set();
+
+  function agregarItemDispositivo(nombre, cantidad, forzarNuevaEntrada = false) {
+    if (!forzarNuevaEntrada && indicePorNombre.has(nombre)) {
+      itemsDispositivos[indicePorNombre.get(nombre)].cantidad += cantidad;
+      return;
+    }
+    itemsDispositivos.push({ nombre, cantidad });
+    if (!forzarNuevaEntrada) {
+      indicePorNombre.set(nombre, itemsDispositivos.length - 1);
+    }
+  }
 
   // Info estructurada de kits/dispositivos, para que el speech ComLog arme
   // sus propias líneas reutilizando estos valores ya calculados, sin volver
@@ -195,10 +224,12 @@ function calcular() {
     const composicion = composicionPorKitId[kit.id] || [];
     if (composicion.length > 0) {
       composicion.forEach((item) => {
-        partes.push(`${item.cantidad * cant} ${item.nombreItem}`);
+        agregarItemDispositivo(item.nombreItem, item.cantidad * cant);
+        nombresDeComposicion.add(item.nombreItem);
       });
     } else {
-      partes.push(`${cant} ${kit.nombre}`);
+      agregarItemDispositivo(kit.nombre, cant);
+      nombresDeComposicion.add(kit.nombre);
     }
   });
 
@@ -228,10 +259,13 @@ function calcular() {
     if (tieneUpfrontPropio) {
       totalSinIva += d.valorSinIva * cant;
       totalConIva += d.valorConIva * cant;
-      partes.push(`${cant} ${d.nombre}` + (hayKitSeleccionado ? " (ampliación aparte)" : ""));
-    } else {
-      partes.push(`${cant} ${d.nombre}`);
     }
+
+    // "Ampliación Aparte" con el mismo nombre que un item de la
+    // composición del kit no se combina: queda como entrada propia (sin
+    // el texto "(ampliación aparte)", pero separada en la lista).
+    const noCombinar = ampliacionAparte && nombresDeComposicion.has(d.nombre);
+    agregarItemDispositivo(d.nombre, cant, noCombinar);
   });
 
   // Suma de RMR (kit + dispositivos) ANTES de sumar la mensualidad vigente
@@ -246,7 +280,9 @@ function calcular() {
     totalSinIva,
     totalConIva,
     totalMensual,
-    dispositivosTexto: partes.join(" + "),
+    dispositivosTexto: itemsDispositivos
+      .map((i) => `${i.cantidad} ${i.nombre}`)
+      .join(" + "),
     kitsInfo,
     dispositivosInfo,
     totalRMR,
@@ -273,13 +309,13 @@ function generarSpeechPresense(resultadoCalculo) {
   const lineas = [];
   kitsInfo.forEach((kit) => {
     lineas.push(
-      `Ampliación de ${kit.cantidad} ${kit.nombre} valor final: ${formatoMoneda(kit.valorConIvaTotal)} adicional mensual: ${formatoMoneda(kit.mensualTotal)}`,
+      `Ampliación de ${kit.cantidad} ${kit.nombre} valor final: ${formatoMoneda(kit.valorConIvaTotal)}${sufijoAdicionalMensual(kit.mensualTotal)}`,
     );
   });
   dispositivosInfo.forEach((d) => {
     if (d.tieneUpfrontPropio) {
       lineas.push(
-        `Ampliación de ${d.cantidad} ${d.nombre} valor final: ${formatoMoneda(d.valorConIvaTotal)} adicional mensual: ${formatoMoneda(d.mensualTotal)}`,
+        `Ampliación de ${d.cantidad} ${d.nombre} valor final: ${formatoMoneda(d.valorConIvaTotal)}${sufijoAdicionalMensual(d.mensualTotal)}`,
       );
     } else {
       lineas.push(`${d.cantidad} ${d.nombre}`);

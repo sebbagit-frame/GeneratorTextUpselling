@@ -206,6 +206,14 @@ button:hover {
   color: var(--th-color);
   margin-top: 4px;
 }
+.disp-adicional::-webkit-outer-spin-button,
+.disp-adicional::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.disp-adicional {
+  -moz-appearance: textfield;
+}
 table {
   width: 100%;
   border-collapse: collapse;
