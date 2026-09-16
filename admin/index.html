@@ -55,6 +55,20 @@
         <input id="dispNombre" required />
 
         <fieldset class="campo-grupo">
+          <legend>Agrupamiento (opcional)</legend>
+          <div class="grid-campos">
+            <div>
+              <label>Dispositivo base</label>
+              <input id="dispBase" placeholder="ej: Shock Sensor" />
+            </div>
+            <div>
+              <label>Pack</label>
+              <input id="dispPack" placeholder="ej: x2, x3, x4" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="campo-grupo">
           <legend>Precios por nivel</legend>
           <div class="grid-campos">
             <div>
@@ -131,6 +145,8 @@
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Dispositivo base</th>
+              <th>Pack</th>
               <th>Alto</th>
               <th>Medio</th>
               <th>Bajo</th>

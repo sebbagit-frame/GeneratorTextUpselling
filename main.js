@@ -211,6 +211,34 @@ function obtenerNiveles(linea) {
   return linea === "presense" ? NIVELES_PRESENSE : NIVELES;
 }
 
+// Agrupa el catálogo por dispositivoBase (o por nombre, si no tiene base)
+// para el select "Dispositivo": cada familia aparece una sola vez, con su
+// fila individual (packLabel null) y sus variantes de pack aparte, para
+// que "¿Es Pack?"/"Pack" puedan elegir entre ellas sin listar cada
+// variante como una opción de dispositivo suelta.
+function agruparCatalogoPorDispositivo(catalogo) {
+  const grupos = new Map();
+  catalogo.forEach((item) => {
+    const key = item.dispositivoBase || item.nombre;
+    let grupo = grupos.get(key);
+    if (!grupo) {
+      grupo = {
+        key,
+        label: item.dispositivoBase || item.nombre,
+        individual: null,
+        variantesPack: [],
+      };
+      grupos.set(key, grupo);
+    }
+    if (item.packLabel) {
+      grupo.variantesPack.push(item);
+    } else {
+      grupo.individual = item;
+    }
+  });
+  return Array.from(grupos.values());
+}
+
 // Habilita/deshabilita los controles principales mientras hay un fetch en
 // curso, como estado de carga simple.
 function setCargando(cargando) {
@@ -237,9 +265,22 @@ function agregarDispositivo() {
       <option value="presense">Presense</option>
     </select>
     <label>Dispositivo</label>
-    <select class="disp-dispositivo" onchange="onCambioSeleccion(${id})">
+    <select class="disp-dispositivo" onchange="onCambioDispositivo(${id})">
       <option value="" disabled selected>Elegí primero una línea</option>
     </select>
+    <div class="disp-espack-wrap oculto">
+      <label>¿Es Pack?</label>
+      <select class="disp-es-pack" onchange="onCambioEsPack(${id})">
+        <option value="no">No</option>
+        <option value="si">Sí</option>
+      </select>
+    </div>
+    <div class="disp-pack-wrap oculto">
+      <label>Pack</label>
+      <select class="disp-pack" onchange="onCambioSeleccion(${id})">
+        <option value="" disabled selected>Seleccionar...</option>
+      </select>
+    </div>
     <label>Nivel de precio</label>
     <select class="disp-nivel" onchange="onCambioSeleccion(${id})">
       <option value="" disabled selected>Elegí primero una línea</option>
@@ -321,10 +362,10 @@ async function onCambioLinea(id) {
 
   selDispositivo.innerHTML = "";
   agregarPlaceholder(selDispositivo);
-  catalogo.forEach((item) => {
+  agruparCatalogoPorDispositivo(catalogo).forEach((grupo) => {
     const opt = document.createElement("option");
-    opt.value = item.id;
-    opt.textContent = item.nombre;
+    opt.value = grupo.key;
+    opt.textContent = grupo.label;
     selDispositivo.appendChild(opt);
   });
 
@@ -337,15 +378,92 @@ async function onCambioLinea(id) {
     selNivel.appendChild(opt);
   });
 
+  // Dispositivo volvió a su placeholder: onCambioDispositivo() se encarga
+  // de ocultar/limpiar "¿Es Pack?"/"Pack" y de disparar onCambioSeleccion().
+  await onCambioDispositivo(id);
+}
+
+// Repuebla "¿Es Pack?"/"Pack" según el grupo de dispositivo elegido, y
+// resuelve/recalcula todo lo demás a través de onCambioSeleccion(). "¿Es
+// Pack?" solo se muestra si ese grupo tiene alguna variante de pack
+// cargada en el catálogo; si no, queda oculto y fijo en "No".
+async function onCambioDispositivo(id) {
+  const el = wrap.querySelector(`[data-id="${id}"]`);
+  const linea = el.querySelector(".disp-linea").value;
+  const dispositivoKey = el.querySelector(".disp-dispositivo").value;
+  const wrapEsPack = el.querySelector(".disp-espack-wrap");
+  const selEsPack = el.querySelector(".disp-es-pack");
+  const wrapPack = el.querySelector(".disp-pack-wrap");
+  const selPack = el.querySelector(".disp-pack");
+
+  limpiarErrorCampo(el.querySelector(".disp-dispositivo"));
+
+  const catalogo = await obtenerCatalogo(linea);
+  const grupo = agruparCatalogoPorDispositivo(catalogo).find(
+    (g) => g.key === dispositivoKey,
+  );
+  const tienePack = !!(grupo && grupo.variantesPack.length > 0);
+
+  wrapEsPack.classList.toggle("oculto", !tienePack);
+  selEsPack.value = "no";
+  wrapPack.classList.add("oculto");
+  selPack.innerHTML = "";
+  agregarPlaceholder(selPack);
+
   await onCambioSeleccion(id);
 }
 
-// Obtiene el item de catálogo elegido en la fila (línea + dispositivo)
+// Repuebla "Pack" con las variantes del grupo elegido cuando "¿Es Pack?"
+// pasa a "Sí", o lo oculta/limpia si vuelve a "No".
+async function onCambioEsPack(id) {
+  const el = wrap.querySelector(`[data-id="${id}"]`);
+  const linea = el.querySelector(".disp-linea").value;
+  const dispositivoKey = el.querySelector(".disp-dispositivo").value;
+  const wrapPack = el.querySelector(".disp-pack-wrap");
+  const selPack = el.querySelector(".disp-pack");
+  const esPack = el.querySelector(".disp-es-pack").value === "si";
+
+  selPack.innerHTML = "";
+  agregarPlaceholder(selPack);
+
+  if (esPack) {
+    const catalogo = await obtenerCatalogo(linea);
+    const grupo = agruparCatalogoPorDispositivo(catalogo).find(
+      (g) => g.key === dispositivoKey,
+    );
+    (grupo ? grupo.variantesPack : []).forEach((item) => {
+      const opt = document.createElement("option");
+      opt.value = item.packLabel;
+      opt.textContent = item.packLabel;
+      selPack.appendChild(opt);
+    });
+    wrapPack.classList.remove("oculto");
+  } else {
+    wrapPack.classList.add("oculto");
+  }
+
+  await onCambioSeleccion(id);
+}
+
+// Obtiene el item de catálogo elegido en la fila (línea + dispositivo,
+// resuelto por grupo + "¿Es Pack?"/"Pack" - ver agruparCatalogoPorDispositivo()).
 async function obtenerItemCatalogo(el) {
   const linea = el.querySelector(".disp-linea").value;
-  const dispositivoId = el.querySelector(".disp-dispositivo").value;
+  const dispositivoKey = el.querySelector(".disp-dispositivo").value;
+  if (!dispositivoKey) return undefined;
+
   const catalogo = await obtenerCatalogo(linea);
-  return catalogo.find((item) => String(item.id) === dispositivoId);
+  const grupo = agruparCatalogoPorDispositivo(catalogo).find(
+    (g) => g.key === dispositivoKey,
+  );
+  if (!grupo) return undefined;
+
+  const esPack = el.querySelector(".disp-es-pack").value === "si";
+  if (!esPack) return grupo.individual || undefined;
+
+  const packLabel = el.querySelector(".disp-pack").value;
+  if (!packLabel) return undefined;
+  return grupo.variantesPack.find((item) => item.packLabel === packLabel);
 }
 
 // Al elegir dispositivo o nivel: autocompleta el valor con IVA, o
@@ -363,6 +481,7 @@ async function onCambioSeleccion(id) {
 
   limpiarErrorCampo(selDispositivo);
   limpiarErrorCampo(selNivel);
+  limpiarErrorCampo(el.querySelector(".disp-pack"));
 
   // Puede dispararse con el Nivel todavía en placeholder (recién se eligió
   // Dispositivo) - se trata igual que "no disponible" hasta que se elija
@@ -586,7 +705,10 @@ async function generarDispositivoSinVisita(
   }
 
   const nombreComLog = usarTextoLlaves ? "Pack x3 Llaves" : nombreReal;
-  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}. Se envía por correo.${lineaVisita}\n \n Comentarios adicionales: ${comentarios}`;
+  // "Se envía por correo." solo aplica cuando no se coordinó una visita
+  // (lineaVisita vacía): si "Ya tiene visita" agregó esa línea, no
+  // corresponde decir que se envía por correo.
+  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}.${lineaVisita ? "" : " Se envía por correo."}${lineaVisita}\n \n Comentarios adicionales: ${comentarios}`;
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
 }
@@ -625,6 +747,19 @@ function validarCamposMain() {
       limpiarErrorCampo(selNivel);
     } else {
       marcar(selNivel, "Elegí un nivel de precio.");
+    }
+
+    const esPackVisible = !el
+      .querySelector(".disp-espack-wrap")
+      .classList.contains("oculto");
+    const esPack = el.querySelector(".disp-es-pack").value === "si";
+    const selPack = el.querySelector(".disp-pack");
+    if (!esPackVisible || !esPack) {
+      limpiarErrorCampo(selPack);
+    } else if (selPack.value) {
+      limpiarErrorCampo(selPack);
+    } else {
+      marcar(selPack, "Elegí un pack.");
     }
 
     const plazoVisible = !el
@@ -813,7 +948,7 @@ async function generar() {
       parteAdicional += `. Plan ${el.dataset.tipoPlan} ${plazo} días`;
     }
 
-    let bloque = `Ampliación ${cantidad} ${nombre} monto sin iva: $${formatoMoneda(totalSinIva)} monto con iva: $${formatoMoneda(totalConIva)} (${parteAdicional}). ${fraseTipoPago}`;
+    let bloque = `Ampliación ${cantidad} ${nombre} monto sin IVA: $${formatoMoneda(totalSinIva)} monto con IVA: $${formatoMoneda(totalConIva)} (${parteAdicional}). ${fraseTipoPago}`;
 
     // El cierre con el operador/matrícula se pega solo al último dispositivo.
     if (index === items.length - 1) {
@@ -899,6 +1034,8 @@ function restablecer() {
 window.agregarDispositivo = agregarDispositivo;
 window.quitarDispositivo = quitarDispositivo;
 window.onCambioLinea = onCambioLinea;
+window.onCambioDispositivo = onCambioDispositivo;
+window.onCambioEsPack = onCambioEsPack;
 window.onCambioSeleccion = onCambioSeleccion;
 window.calcularIva = calcularIva;
 window.generar = generar;

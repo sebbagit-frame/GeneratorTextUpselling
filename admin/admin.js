@@ -100,6 +100,8 @@ const selLinea = document.getElementById("admLinea");
 const formDispositivo = document.getElementById("formDispositivo");
 const dispEditId = document.getElementById("dispEditId");
 const dispNombre = document.getElementById("dispNombre");
+const dispBase = document.getElementById("dispBase");
+const dispPack = document.getElementById("dispPack");
 const dispAlto = document.getElementById("dispAlto");
 const dispMedio = document.getElementById("dispMedio");
 const dispBajo = document.getElementById("dispBajo");
@@ -131,6 +133,8 @@ function limpiarFormDispositivo() {
 function cargarDispositivoEnForm(item) {
   dispEditId.value = item.id;
   dispNombre.value = item.nombre;
+  dispBase.value = item.dispositivoBase ?? "";
+  dispPack.value = item.packLabel ?? "";
   dispAlto.value = item.valorAlto ?? "";
   dispMedio.value = item.valorMedio ?? "";
   dispBajo.value = item.valorBajo ?? "";
@@ -167,6 +171,8 @@ async function renderDispositivos() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.nombre}</td>
+      <td>${item.dispositivoBase ?? "-"}</td>
+      <td>${item.packLabel ?? "-"}</td>
       <td>${item.valorAlto ?? "-"}</td>
       <td>${item.valorMedio ?? "-"}</td>
       <td>${item.valorBajo ?? "-"}</td>
@@ -205,6 +211,8 @@ formDispositivo.addEventListener("submit", async (e) => {
   const linea = selLinea.value;
   const datos = {
     nombre: dispNombre.value.trim(),
+    dispositivoBase: dispBase.value.trim() || null,
+    packLabel: dispPack.value.trim() || null,
     valorAlto: parseValorOpcional(dispAlto.value),
     valorMedio: parseValorOpcional(dispMedio.value),
     valorBajo: parseValorOpcional(dispBajo.value),
