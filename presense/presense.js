@@ -326,7 +326,7 @@ function generarSpeechPresense(resultadoCalculo) {
   const fueAbonado = document.getElementById("fueAbonado").checked;
 
   const textoSpeech = campana
-    ? `${prefijo} ${campana.textoApertura}\n\n${lineas.join("\n")}\n${fraseTipoPago}\nSe pacta visita para el día ${fechaFormateada}${fueAbonado ? ", Ya abonado" : ""}.\n\nTotal RMR: ${formatoMoneda(totalRMR)}`
+    ? `${prefijo} ${campana.textoApertura}\n\n${lineas.join("\n")}\n${fraseTipoPago}\nCliente solicita visita para el día ${fechaFormateada}${fueAbonado ? ", Ya abonado" : ""}.\n\nTotal RMR: ${formatoMoneda(totalRMR)}`
     : "-";
 
   document.getElementById("outSpeechComLog").textContent = textoSpeech;
