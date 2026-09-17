@@ -22,10 +22,6 @@
 
       <div class="row">
         <div>
-          <label>Fecha solicitada</label>
-          <input id="fecha" type="date" />
-        </div>
-        <div>
           <label>Forma de pago (upfront)</label>
           <select id="formaPago">
             <option value="cuotas">En cuotas</option>
@@ -44,6 +40,10 @@
           </select>
         </div>
       </div>
+
+      <label>Comentarios adicionales</label>
+      <small class="texto-ayuda">En caso de que el cliente haya indicado una fecha aproximada, escribir acá abajo</small>
+      <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
 
       <label>Mensualidad vigente del cliente</label>
       <input type="number" id="mensualidadVigente" placeholder="0" step="0.01" />

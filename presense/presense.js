@@ -49,21 +49,6 @@ function sufijoAdicionalMensual(monto) {
     : ". Sin adicional mensual";
 }
 
-// Convierte el valor de un <input type="date"> (yyyy-mm-dd) a "DD/MM/AAAA".
-function formatearFecha(fechaISO) {
-  if (!fechaISO) return "";
-  const [anio, mes, dia] = fechaISO.split("-");
-  return `${dia}/${mes}/${anio}`;
-}
-
-// Igual que formatearFecha, pero sin el año - formato que ya usa el ComLog
-// del generador principal para esta misma línea del speech.
-function formatearFechaCorta(fechaISO) {
-  if (!fechaISO) return "-";
-  const [, mes, dia] = fechaISO.split("-");
-  return `${dia}/${mes}`;
-}
-
 // Repuebla el select de Campaña (para el speech ComLog) según la cartera
 // elegida, mismo patrón que ya usa el generador principal.
 async function cargarCampanasPresense() {
@@ -322,11 +307,11 @@ function generarSpeechPresense(resultadoCalculo) {
     }
   });
 
-  const fechaFormateada = formatearFechaCorta(document.getElementById("fecha").value);
+  const comentarios = document.getElementById("comentariosAdicionales").value.trim();
   const fueAbonado = document.getElementById("fueAbonado").checked;
 
   const textoSpeech = campana
-    ? `${prefijo} ${campana.textoApertura}\n\n${lineas.join("\n")}\n${fraseTipoPago}\nFecha disponible del cliente: ${fechaFormateada}${fueAbonado ? ", Ya abonado" : ""}.\n\nTotal RMR: ${formatoMoneda(totalRMR)}`
+    ? `${prefijo} ${campana.textoApertura}\n\n${lineas.join("\n")}\n${fraseTipoPago}\nPreferencia de visita indicada por el cliente: ${comentarios}${fueAbonado ? ", Ya abonado" : ""}.\n\nTotal RMR: ${formatoMoneda(totalRMR)}`
     : "-";
 
   document.getElementById("outSpeechComLog").textContent = textoSpeech;
@@ -399,11 +384,11 @@ function validarCamposPresense() {
     marcar(zona, "Este campo es obligatorio.");
   }
 
-  const fecha = document.getElementById("fecha");
-  if (fecha.value) {
-    limpiarErrorCampo(fecha);
+  const comentariosAdicionales = document.getElementById("comentariosAdicionales");
+  if (comentariosAdicionales.value.trim()) {
+    limpiarErrorCampo(comentariosAdicionales);
   } else {
-    marcar(fecha, "Este campo es obligatorio.");
+    marcar(comentariosAdicionales, "Este campo es obligatorio.");
   }
 
   const formaPagoEl = document.getElementById("formaPago");
@@ -467,8 +452,8 @@ document.getElementById("nroInst").addEventListener("input", (e) => {
 document.getElementById("zona").addEventListener("input", (e) => {
   if (e.target.value.trim()) limpiarErrorCampo(e.target);
 });
-document.getElementById("fecha").addEventListener("input", (e) => {
-  if (e.target.value) limpiarErrorCampo(e.target);
+document.getElementById("comentariosAdicionales").addEventListener("input", (e) => {
+  if (e.target.value.trim()) limpiarErrorCampo(e.target);
 });
 document.getElementById("formaPago").addEventListener("change", (e) => {
   if (e.target.value) limpiarErrorCampo(e.target);
@@ -504,7 +489,7 @@ document.getElementById("generar").addEventListener("click", () => {
   const datosCuadro = {
     nro: document.getElementById("nroInst").value,
     zona: document.getElementById("zona").value,
-    fecha: formatearFecha(document.getElementById("fecha").value),
+    fecha: document.getElementById("comentariosAdicionales").value.trim(),
     upfrontSin: formatoMoneda(totalSinIva),
     upfrontCon: textoUpfrontCon,
     abono: formatoMoneda(totalMensual),
