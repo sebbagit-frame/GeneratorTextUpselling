@@ -159,11 +159,13 @@ function calcular() {
   let totalMensual = 0;
   let hayKitSeleccionado = false;
 
-  // Lista de dispositivos para el cuadro/mail, agrupando por nombre (kit +
-  // adicionales) en vez de listar cada origen por separado. Un dispositivo
-  // adicional marcado "Ampliación Aparte" NUNCA se combina con un item de
-  // la composición del kit que tenga el mismo nombre (es una venta aparte,
-  // tiene que quedar visible como entrada propia) - pero sin el texto
+  // Lista de dispositivos para el cuadro/mail, agrupando por dispositivoBase
+  // (kit + adicionales) en vez de por nombre exacto - así "Shock Sensor" y
+  // "Pack x3 Shock Sensor (Presense)" caen en la misma entrada agrupada, en
+  // vez de listarse por separado. Un dispositivo adicional marcado
+  // "Ampliación Aparte" NUNCA se combina con un item de la composición del
+  // kit que comparta el mismo dispositivoBase (es una venta aparte, tiene
+  // que quedar visible como entrada propia) - pero sin el texto
   // "(ampliación aparte)", como cualquier otro item de la lista.
   const itemsDispositivos = [];
   const indicePorNombre = new Map();
@@ -246,11 +248,19 @@ function calcular() {
       totalConIva += d.valorConIva * cant;
     }
 
-    // "Ampliación Aparte" con el mismo nombre que un item de la
+    // Se agrupa por dispositivoBase (si tiene), no por el nombre real de la
+    // variante elegida - así "Pack x3 Shock Sensor (Presense)" aporta 3
+    // unidades de "Shock Sensor" en vez de aparecer como su propia entrada.
+    // Sin dispositivoBase (dispositivo suelto, sin familia), se comporta
+    // exactamente igual que antes: agrupa por su propio nombre.
+    const claveGrupo = d.dispositivoBase || d.nombre;
+    const multiplicador = d.multiplicador || 1;
+
+    // "Ampliación Aparte" con el mismo dispositivoBase que un item de la
     // composición del kit no se combina: queda como entrada propia (sin
     // el texto "(ampliación aparte)", pero separada en la lista).
-    const noCombinar = ampliacionAparte && nombresDeComposicion.has(d.nombre);
-    agregarItemDispositivo(d.nombre, cant, noCombinar);
+    const noCombinar = ampliacionAparte && nombresDeComposicion.has(claveGrupo);
+    agregarItemDispositivo(claveGrupo, cant * multiplicador, noCombinar);
   });
 
   // Suma de RMR (kit + dispositivos) ANTES de sumar la mensualidad vigente
