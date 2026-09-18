@@ -139,6 +139,10 @@ function nuevaFilaDispositivo() {
       <input type="checkbox" class="presense-disp-ampliacion-aparte">
       Ampliación Aparte Dispositivo
     </label>
+    <label class="presense-disp-ampliacion-label">
+      <input type="checkbox" class="presense-disp-chequear-tecnico">
+      Dispositivo a chequear con técnico
+    </label>
   `;
   item.querySelector(".btn-eliminar").addEventListener("click", () => item.remove());
   dispositivosList.appendChild(item);
@@ -230,6 +234,26 @@ function calcular() {
     const cant = parseFloat(item.querySelector(".disp-cant").value) || 0;
     if (cant <= 0) return;
     const d = DISPOSITIVOS[idx];
+
+    // "Dispositivo a chequear con técnico" tiene prioridad sobre
+    // "Ampliación Aparte": queda afuera de todos los totales (upfront,
+    // mensual y Total RMR), afuera de la lista "Dispositivos" (no pasa por
+    // agregarItemDispositivo) y no se combina con otras filas aunque
+    // compartan nombre - cada una es su propia entrada en dispositivosInfo,
+    // que el ComLog y el cuerpo del mail arman con su propio formato.
+    const chequearTecnico = item.querySelector(".presense-disp-chequear-tecnico").checked;
+    if (chequearTecnico) {
+      dispositivosInfo.push({
+        nombre: d.nombre,
+        cantidad: cant,
+        chequearTecnico: true,
+        valorSinIvaTotal: d.valorSinIva * cant,
+        valorConIvaTotal: d.valorConIva * cant,
+        mensualTotal: d.mensual * cant,
+      });
+      return;
+    }
+
     const ampliacionAparte = item.querySelector(".presense-disp-ampliacion-aparte").checked;
     const tieneUpfrontPropio = !hayKitSeleccionado || ampliacionAparte;
 
@@ -264,9 +288,13 @@ function calcular() {
   });
 
   // Suma de RMR (kit + dispositivos) ANTES de sumar la mensualidad vigente
-  // del cliente - la usa el speech ComLog, que no incluye ese campo.
+  // del cliente - la usa el speech ComLog, que no incluye ese campo. Los
+  // marcados "chequear con técnico" quedan afuera (no suman a ningún
+  // total, ver el forEach de arriba).
   const totalRMR = kitsInfo.reduce((acc, k) => acc + k.mensualTotal, 0) +
-    dispositivosInfo.reduce((acc, d) => acc + d.mensualTotal, 0);
+    dispositivosInfo
+      .filter((d) => !d.chequearTecnico)
+      .reduce((acc, d) => acc + d.mensualTotal, 0);
 
   const mensualidadVigente = parseFloat(document.getElementById("mensualidadVigente").value) || 0;
   totalMensual += mensualidadVigente;
@@ -308,7 +336,11 @@ function generarSpeechPresense(resultadoCalculo) {
     );
   });
   dispositivosInfo.forEach((d) => {
-    if (d.tieneUpfrontPropio) {
+    if (d.chequearTecnico) {
+      lineas.push(
+        `Ampliación a chequear con el técnico: ${d.nombre} valor final: ${formatoMoneda(d.valorConIvaTotal)}${sufijoAdicionalMensual(d.mensualTotal)}`,
+      );
+    } else if (d.tieneUpfrontPropio) {
       lineas.push(
         `Ampliación de ${d.cantidad} ${d.nombre} valor final: ${formatoMoneda(d.valorConIvaTotal)}${sufijoAdicionalMensual(d.mensualTotal)}`,
       );
@@ -485,7 +517,8 @@ document.getElementById("generar").addEventListener("click", () => {
   if (!validarCamposPresense()) return;
 
   const resultadoCalculo = calcular();
-  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto } = resultadoCalculo;
+  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto, dispositivosInfo } = resultadoCalculo;
+  const dispositivosChequearTecnico = dispositivosInfo.filter((d) => d.chequearTecnico);
   const formaPago = document.getElementById("formaPago").value;
   const cuotas = document.getElementById("cuotasFinanciamiento").value;
   const textoUpfrontCon =
@@ -508,7 +541,7 @@ document.getElementById("generar").addEventListener("click", () => {
   };
 
   generarSpeechPresense(resultadoCalculo);
-  generarCuerpoMail(datosCuadro);
+  generarCuerpoMail(datosCuadro, dispositivosChequearTecnico);
 
   document.getElementById("resultadoSpeechWrap").classList.remove("oculto");
   document.getElementById("resultadoCuerpoMailWrap").classList.remove("oculto");
@@ -560,13 +593,23 @@ function generarHtmlCuadro(datos) {
 // (no como texto), reutilizando generarHtmlCuadro() sin volver a armarlo.
 // La línea del comprobante de pago se omite entera (no se reemplaza) si el
 // cambio de tecnología no fue abonado.
-function generarCuerpoMail(datosCuadro) {
+function generarCuerpoMail(datosCuadro, dispositivosChequearTecnico = []) {
   const cuadroHtml = generarHtmlCuadro(datosCuadro);
+
+  // Dispositivos marcados "a chequear con técnico": van debajo del cuadro,
+  // uno por línea, afuera de la tabla (no forman parte del cuadro en sí).
+  const lineasChequearTecnico = dispositivosChequearTecnico
+    .map(
+      (d) =>
+        `<p>Dispositivo a chequear con técnico: ${d.nombre} valor sin iva: ${formatoMoneda(d.valorSinIvaTotal)} valor con IVA: ${formatoMoneda(d.valorConIvaTotal)} adicional mensual: ${formatoMoneda(d.mensualTotal)}</p>`,
+    )
+    .join("\n    ");
 
   document.getElementById("outCuerpoMail").innerHTML = `
     <p>Buenas tardes equipo, espero se encuentren bien.</p>
     <p>En comunicación con el titular, aceptó el cambio de tecnología de VF a PreSense. Adjunto detalle:</p>
     ${cuadroHtml}
+    ${lineasChequearTecnico}
     <p>Sumamos al equipo de Field para que nos dé prioridad en la instalación.</p>
     <p>Esto tiene que ser volcado, no cambia ningún dato de SBN. Se conserva el mismo titular.</p>
     <p>Por favor mantenernos al tanto de la instalación.</p>
