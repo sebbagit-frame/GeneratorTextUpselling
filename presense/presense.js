@@ -599,10 +599,13 @@ function generarCuerpoMail(datosCuadro, dispositivosChequearTecnico = []) {
   // Dispositivos marcados "a chequear con técnico": van debajo del cuadro,
   // uno por línea, afuera de la tabla (no forman parte del cuadro en sí).
   const lineasChequearTecnico = dispositivosChequearTecnico
-    .map(
-      (d) =>
-        `<p>Dispositivo a chequear con técnico: ${d.nombre} valor sin iva: ${formatoMoneda(d.valorSinIvaTotal)} valor con IVA: ${formatoMoneda(d.valorConIvaTotal)} adicional mensual: ${formatoMoneda(d.mensualTotal)}</p>`,
-    )
+    .map((d) => {
+      const fraseAdicionalMensual =
+        d.mensualTotal > 0
+          ? `adicional mensual: ${formatoMoneda(d.mensualTotal)}`
+          : "sin adicional mensual";
+      return `<p>Dispositivo a chequear con técnico: ${d.nombre} valor sin iva: ${formatoMoneda(d.valorSinIvaTotal)} valor con IVA: ${formatoMoneda(d.valorConIvaTotal)} ${fraseAdicionalMensual}</p>`;
+    })
     .join("\n    ");
 
   document.getElementById("outCuerpoMail").innerHTML = `
