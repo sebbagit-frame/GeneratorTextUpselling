@@ -319,7 +319,7 @@ function generarSpeechPresense(resultadoCalculo) {
   const { kitsInfo, dispositivosInfo, totalRMR } = resultadoCalculo;
 
   const cartera = document.getElementById("psCartera").value;
-  const prefijo = cartera === "OUT" ? "AR_UPSELLING_OUT:" : "AR_UPSELLING:";
+  const prefijo = cartera === "OUT" ? "AR_UPSELLING_OUT:" : "AR_UPSELLING_IN:";
   const campana = CAMPANAS_PS[document.getElementById("psCampana").value];
 
   const formaPago = document.getElementById("formaPago").value;

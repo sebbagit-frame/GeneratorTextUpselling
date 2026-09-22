@@ -631,7 +631,7 @@ document.getElementById("noSePactoVisita").addEventListener("change", refrescarF
 // que conserva su texto fijo histórico en vez del nombre real.
 async function generarDispositivoSinVisita(
   el,
-  { prefijo, tipoPago, cuotas, fraseTipoPago, nombreReal, usarTextoLlaves },
+  { prefijoMantenimiento, prefijoComLog, tipoPago, cuotas, fraseTipoPago, nombreReal, usarTextoLlaves },
 ) {
   const cantidad = parseInt(el.querySelector(".disp-cantidad").value) || 1;
   const valConIva = parseFloat(el.querySelector(".disp-valor-coniva").value) || 0;
@@ -656,7 +656,7 @@ async function generarDispositivoSinVisita(
   // ***NO COBRAR AMPLIACIÓN YA ABONADA***), acá "Ya abonado" va como cierre
   // del texto, aclarando el medio de pago.
   const nombreMantenimiento = usarTextoLlaves ? "Pack x3 llaves" : nombreReal;
-  let texto = `${prefijo} Ampliación ${cantidad} ${nombreMantenimiento} valor sin iva: $${formatoMoneda(totalSinIva)} valor con iva: $${formatoMoneda(totalConIva)} ${fraseTipoPago}`;
+  let texto = `${prefijoMantenimiento} Ampliación ${cantidad} ${nombreMantenimiento} valor sin iva: $${formatoMoneda(totalSinIva)} valor con iva: $${formatoMoneda(totalConIva)} ${fraseTipoPago}`;
   if (cobrado) {
     texto += ` Ya abonado ${tipoPagoTexto}.`;
   }
@@ -708,7 +708,7 @@ async function generarDispositivoSinVisita(
   // "Se envía por correo." solo aplica cuando no se coordinó una visita
   // (lineaVisita vacía): si "Ya tiene visita" agregó esa línea, no
   // corresponde decir que se envía por correo.
-  const textoComLog = `${prefijo} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}.${lineaVisita ? "" : " Se envía por correo."}${lineaVisita}\n \n Comentarios adicionales: ${comentarios}`;
+  const textoComLog = `${prefijoComLog} ${apertura}. Se informa ${cantidad} ${nombreComLog}. Se indica valor final $${formatoMoneda(totalConIva)} 1 pago. Cliente acepta. ${aclaracionCobro}.${lineaVisita ? "" : " Se envía por correo."}${lineaVisita}\n \n Comentarios adicionales: ${comentarios}`;
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
 }
@@ -858,7 +858,10 @@ async function generar() {
   }
 
   const cartera = document.getElementById("cartera").value;
-  const prefijo = cartera === "OUT" ? "AR_UPSELLING_OUT:" : "AR_UPSELLING:";
+  // Mantenimiento y ComLog usan prefijos distintos: Mantenimiento sin
+  // "AR_", ComLog con "AR_" y el sufijo _IN/_OUT explícito en ambos casos.
+  const prefijoMantenimiento = cartera === "OUT" ? "UPSELLING_OUT:" : "UPSELLING_IN:";
+  const prefijoComLog = cartera === "OUT" ? "AR_UPSELLING_OUT:" : "AR_UPSELLING_IN:";
   const tipoPago = document.getElementById("tipoPago").value;
   const cuotas = document.getElementById("cuotas").value;
   const operador = OPERADORES[selOperador.value];
@@ -882,7 +885,8 @@ async function generar() {
     const nombreReal = item ? item.nombre.trim() : "";
     if (DISPOSITIVOS_SIN_VISITA.has(nombreReal)) {
       await generarDispositivoSinVisita(items[0], {
-        prefijo,
+        prefijoMantenimiento,
+        prefijoComLog,
         tipoPago,
         cuotas,
         fraseTipoPago,
@@ -972,7 +976,7 @@ async function generar() {
   if (todosCobrados) {
     cuerpo = `***NO COBRAR AMPLIACIÓN YA ABONADA***(COLOCAR ESTE IMPORTE EN EL PARTE DIGITAL) ${cuerpo}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
   }
-  const texto = `${prefijo} ${cuerpo}`;
+  const texto = `${prefijoMantenimiento} ${cuerpo}`;
 
   document.getElementById("resultado").textContent = texto;
 
@@ -1009,7 +1013,7 @@ async function generar() {
     : `Se pacta visita para el día ${fechaFormateada} entre ${horaDesde}-${horaHasta} hs${todosCobrados ? ", TODO ya abonado" : ""}.`;
 
   const textoComLog = campana
-    ? `${prefijo} ${campana.textoApertura}\n \n ${lineasDispositivos}\n ${fraseTipoPago}\n ${lineaVisitaGenerico}\n \n Comentarios adicionales: ${comentarios}`
+    ? `${prefijoComLog} ${campana.textoApertura}\n \n ${lineasDispositivos}\n ${fraseTipoPago}\n ${lineaVisitaGenerico}\n \n Comentarios adicionales: ${comentarios}`
     : "-";
 
   document.getElementById("resultadoComLog").textContent = textoComLog;
