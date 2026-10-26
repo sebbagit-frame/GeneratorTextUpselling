@@ -379,3 +379,320 @@ button.secundario {
 .presense-resultados .card {
   margin-bottom: 0;
 }
+
+/* ==================== Admin ==================== */
+/* Todo lo de abajo cuelga de body.admin-page para no afectar al generador
+   principal ni al de PreSense. Reasigna las variables existentes con la
+   paleta del admin y agrega solo las que faltaban. */
+
+body.admin-page {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-heading: #0f172a;
+  --th-color: #64748b;
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --table-border: #e2e8f0;
+  --dispositivo-border: #e2e8f0;
+  --link-color: #64748b;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #16a34a;
+  --surface-hover: #f1f5f9;
+  --focus-ring: rgba(79, 70, 229, 0.25);
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 32px auto;
+  padding: 0 24px;
+  color-scheme: light;
+}
+body.admin-page[data-theme="dark"] {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text: #e2e8f0;
+  --text-heading: #f1f5f9;
+  --th-color: #94a3b8;
+  --input-bg: #0f172a;
+  --input-border: #334155;
+  --table-border: #334155;
+  --dispositivo-border: #334155;
+  --link-color: #94a3b8;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --surface-hover: #273449;
+  --focus-ring: rgba(99, 102, 241, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
+}
+
+/* ---- Tipografía ---- */
+body.admin-page h2 {
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+  padding-right: 48px;
+}
+body.admin-page h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0 0 16px;
+}
+body.admin-page a {
+  text-decoration: none;
+  font-size: 13px;
+}
+body.admin-page a:hover {
+  color: var(--accent);
+}
+
+/* ---- Cards ---- */
+body.admin-page .card {
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+body.admin-page #composicionWrap {
+  margin-top: 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--table-border);
+}
+body.admin-page .campo-grupo {
+  border-radius: 10px;
+  padding: 12px 16px 16px;
+}
+body.admin-page .campo-grupo legend,
+body.admin-page h4.subtitulo {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--th-color);
+}
+
+/* ---- Formularios ---- */
+body.admin-page label {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--th-color);
+}
+body.admin-page .grid-campos label {
+  margin-top: 0;
+}
+body.admin-page input,
+body.admin-page select,
+body.admin-page textarea {
+  min-height: 38px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+body.admin-page textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+body.admin-page input:focus,
+body.admin-page select:focus,
+body.admin-page textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+body.admin-page #loginError {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+
+/* ---- Botones ---- */
+body.admin-page button {
+  margin-top: 20px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 500;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+body.admin-page button:hover {
+  background: var(--accent-hover);
+}
+body.admin-page button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+body.admin-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+body.admin-page button.secundario,
+body.admin-page .editar {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--input-border);
+}
+body.admin-page button.secundario:hover,
+body.admin-page .editar:hover {
+  background: var(--surface-hover);
+}
+body.admin-page .eliminar {
+  background: var(--danger);
+  color: #fff;
+}
+body.admin-page .eliminar:hover {
+  background: var(--danger-hover);
+}
+body.admin-page .eliminar:focus-visible {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+body.admin-page #logoutBtn {
+  margin: 0;
+}
+body.admin-page #themeToggle {
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--input-border);
+}
+body.admin-page #themeToggle:hover {
+  background: var(--surface-hover);
+  opacity: 1;
+}
+
+/* ---- Tablas ---- */
+body.admin-page table {
+  font-size: 13px;
+}
+body.admin-page th,
+body.admin-page td {
+  padding: 10px 12px;
+}
+body.admin-page th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  background: var(--card-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+body.admin-page tbody tr:hover td {
+  background: var(--surface-hover);
+}
+body.admin-page tbody tr:last-child td {
+  border-bottom: none;
+}
+body.admin-page table button {
+  margin-top: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+/* Columna de acciones (Editar/Eliminar): es la última en todas las tablas del admin. */
+body.admin-page td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+body.admin-page td:last-child button + button {
+  margin-left: 6px;
+}
+/* Columnas numéricas (valores y RMR) alineadas a la derecha. */
+body.admin-page #tablaDispositivos :is(th, td):nth-child(n + 4):nth-child(-n + 13),
+body.admin-page #tablaTurnos :is(th, td):nth-child(3),
+body.admin-page #tablaPresenseKits :is(th, td):nth-child(n + 2):nth-child(-n + 4),
+body.admin-page #tablaPresenseDispositivos :is(th, td):nth-child(n + 2):nth-child(-n + 4),
+body.admin-page #tablaComposicion :is(th, td):nth-child(n + 2):nth-child(-n + 3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+body.admin-page .tabla-scroll {
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--input-border) transparent;
+}
+body.admin-page .tabla-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+body.admin-page .tabla-scroll::-webkit-scrollbar-thumb {
+  background: var(--input-border);
+  border-radius: 4px;
+}
+/* Solo Dispositivos tiene scroll vertical propio para que el encabezado quede
+   fijo; en Campañas el texto de apertura es largo y queda incómodo. */
+body.admin-page .tabla-scroll:has(#tablaDispositivos) {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+body.admin-page #tablaCampanas th {
+  position: static;
+}
+body.admin-page #tablaDispositivos th {
+  font-size: 11px;
+}
+body.admin-page #tablaDispositivos th:last-child {
+  z-index: 2;
+}
+body.admin-page #tablaDispositivos tbody tr:hover td:last-child {
+  background: var(--surface-hover);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  body.admin-page {
+    margin: 16px auto;
+    padding: 0 16px;
+  }
+  body.admin-page .card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  body.admin-page .row {
+    flex-direction: column;
+    gap: 0;
+  }
+  body.admin-page .grid-campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  body.admin-page form > button {
+    width: 100%;
+  }
+  body.admin-page form > button.secundario {
+    margin: 10px 0 0;
+  }
+  /* Las tablas sin .tabla-scroll también scrollean en horizontal. */
+  body.admin-page #tablaOperadores,
+  body.admin-page #tablaTurnos,
+  body.admin-page #tablaPresenseKits,
+  body.admin-page #tablaComposicion,
+  body.admin-page #tablaPresenseDispositivos {
+    display: block;
+    overflow-x: auto;
+  }
+}
+@media (max-width: 480px) {
+  body.admin-page .grid-campos {
+    grid-template-columns: 1fr;
+  }
+}
