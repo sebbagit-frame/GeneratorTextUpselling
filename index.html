@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Generador de Speech - Upselling</title>
 
     <link rel="stylesheet" href="style.css">
@@ -17,62 +18,86 @@
     <p><a href="presense/index.html">Generador PreSense &rarr;</a></p>
 
     <div class="card">
-      <label>Dispositivos</label>
-      <div id="dispositivosWrap"></div>
-      <button type="button" onclick="agregarDispositivo()">
-        + Agregar dispositivo
-      </button>
+      <section class="bloque">
+        <h3>Dispositivos</h3>
+        <div id="dispositivosWrap"></div>
+        <button type="button" onclick="agregarDispositivo()">
+          + Agregar dispositivo
+        </button>
+      </section>
 
-      <label>Cartera</label>
-      <select id="cartera">
-        <option value="" disabled selected>Seleccionar...</option>
-        <option value="IN">IN</option>
-        <option value="OUT">OUT</option>
-      </select>
-
-      <label>Tipo de pago</label>
-      <select id="tipoPago">
-        <option value="" disabled selected>Seleccionar...</option>
-        <option value="transferencia">1 Pago - Transferencia</option>
-        <option value="tarjeta">1 Pago - Tarjeta de Crédito (Visa/MasterCard)</option>
-        <option value="financiado">Financiado</option>
-      </select>
-
-      <div id="cuotasWrap" class="oculto">
-        <label>Cantidad de cuotas</label>
-        <select id="cuotas"></select>
-      </div>
-
-      <label>Operador</label>
-      <select id="operador"></select>
-
-      <label>Campaña</label>
-      <select id="campana"></select>
-
-      <label id="filaYaTieneVisita" class="oculto" style="display:flex;align-items:center;gap:8px;margin-top:14px">
-        <input type="checkbox" id="yaTieneVisita" style="width:auto">
-        Ya tiene visita
-        <span style="color:var(--th-color);font-size:12px">Clickear en caso de que ya cuente con visita anteriormente</span>
-      </label>
-
-      <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
-        <input type="checkbox" id="noSePactoVisita" style="width:auto">
-        No se pactó visita
-      </label>
-
-      <div class="row" id="filaVisita">
-        <div>
-          <label>Fecha de visita</label>
-          <input type="date" id="fechaVisita">
+      <section class="bloque">
+        <h3>Cartera y forma de pago</h3>
+        <div class="row">
+          <div>
+            <label>Cartera</label>
+            <select id="cartera">
+              <option value="" disabled selected>Seleccionar...</option>
+              <option value="IN">IN</option>
+              <option value="OUT">OUT</option>
+            </select>
+          </div>
+          <div>
+            <label>Tipo de pago</label>
+            <select id="tipoPago">
+              <option value="" disabled selected>Seleccionar...</option>
+              <option value="transferencia">1 Pago - Transferencia</option>
+              <option value="tarjeta">1 Pago - Tarjeta de Crédito (Visa/MasterCard)</option>
+              <option value="financiado">Financiado</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label>Turno de visita</label>
-          <select id="turnoHorario"></select>
-        </div>
-      </div>
 
-      <label>Comentarios adicionales</label>
-      <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
+        <div id="cuotasWrap" class="oculto">
+          <label>Cantidad de cuotas</label>
+          <select id="cuotas"></select>
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h3>Operador y campaña</h3>
+        <div class="row">
+          <div>
+            <label>Operador</label>
+            <select id="operador"></select>
+          </div>
+          <div>
+            <label>Campaña</label>
+            <select id="campana"></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h3>Visita</h3>
+        <label id="filaYaTieneVisita" class="oculto" style="display:flex;align-items:center;gap:8px;margin-top:14px">
+          <input type="checkbox" id="yaTieneVisita" style="width:auto">
+          Ya tiene visita
+          <span style="color:var(--th-color);font-size:12px">Clickear en caso de que ya cuente con visita anteriormente</span>
+        </label>
+
+        <label class="check-label">
+          <input type="checkbox" id="noSePactoVisita">
+          No se pactó visita
+        </label>
+
+        <div class="row" id="filaVisita">
+          <div>
+            <label>Fecha de visita</label>
+            <input type="date" id="fechaVisita">
+          </div>
+          <div>
+            <label>Turno de visita</label>
+            <select id="turnoHorario"></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h3>Comentarios</h3>
+        <label>Comentarios adicionales</label>
+        <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
+      </section>
 
       <button onclick="generar()">Generar Speech</button>
     </div>
