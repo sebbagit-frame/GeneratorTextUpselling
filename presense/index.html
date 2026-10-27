@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Generador PreSense - Cambio de Tecnología</title>
 
     <link rel="stylesheet" href="../style.css" />
@@ -14,59 +15,74 @@
     <p><a href="../index.html">&larr; Volver al Upselling</a></p>
 
     <div class="card">
-      <label>Nro de instalación</label>
-      <input id="nroInst" placeholder="1532243" />
+      <section class="bloque">
+        <h3>Instalación</h3>
+        <label>Nro de instalación</label>
+        <input id="nroInst" placeholder="1532243" />
 
-      <label>Zona</label>
-      <input id="zona" placeholder="Agronomía, CABA CP 1431" />
+        <label>Zona</label>
+        <input id="zona" placeholder="Agronomía, CABA CP 1431" />
+      </section>
 
-      <div class="row">
-        <div>
-          <label>Forma de pago (upfront)</label>
-          <select id="formaPago">
-            <option value="cuotas">En cuotas</option>
-            <option value="unico">Pago único</option>
-          </select>
+      <section class="bloque">
+        <h3>Forma de pago</h3>
+        <div class="row">
+          <div>
+            <label>Forma de pago (upfront)</label>
+            <select id="formaPago">
+              <option value="cuotas">En cuotas</option>
+              <option value="unico">Pago único</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      <div class="row" id="filaCuotas">
-        <div>
-          <label>Cantidad de cuotas</label>
-          <select id="cuotasFinanciamiento">
-            <option value="3">3 cuotas</option>
-            <option value="6">6 cuotas</option>
-            <option value="12">12 cuotas</option>
-          </select>
+        <div class="row" id="filaCuotas">
+          <div>
+            <label>Cantidad de cuotas</label>
+            <select id="cuotasFinanciamiento">
+              <option value="3">3 cuotas</option>
+              <option value="6">6 cuotas</option>
+              <option value="12">12 cuotas</option>
+            </select>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <label>Comentarios adicionales</label>
-      <small class="texto-ayuda">En caso de que el cliente haya indicado una fecha aproximada, escribir acá abajo</small>
-      <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
+      <section class="bloque">
+        <h3>Comentarios</h3>
+        <label>Comentarios adicionales</label>
+        <small class="texto-ayuda">En caso de que el cliente haya indicado una fecha aproximada, escribir acá abajo</small>
+        <textarea id="comentariosAdicionales" placeholder="Comentarios adicionales"></textarea>
+      </section>
 
-      <label>Mensualidad vigente del cliente</label>
-      <input type="number" id="mensualidadVigente" placeholder="0" step="0.01" />
-      <small class="texto-ayuda">En caso de corresponder decimal, usar punto (" . ")</small>
+      <section class="bloque">
+        <h3>Mensualidad y abono</h3>
+        <label>Mensualidad vigente del cliente</label>
+        <input type="number" id="mensualidadVigente" placeholder="0" step="0.01" />
+        <small class="texto-ayuda">En caso de corresponder decimal, usar punto (" . ")</small>
 
-      <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
-        <input type="checkbox" id="fueAbonado" style="width:auto">
-        ¿Fue abonado?
-      </label>
+        <label class="check-label">
+          <input type="checkbox" id="fueAbonado">
+          ¿Fue abonado?
+        </label>
+      </section>
 
-      <div class="row">
-        <div>
-          <label>Cartera</label>
-          <select id="psCartera">
-            <option value="IN">IN</option>
-            <option value="OUT">OUT</option>
-          </select>
+      <section class="bloque">
+        <h3>Cartera y campaña</h3>
+        <div class="row">
+          <div>
+            <label>Cartera</label>
+            <select id="psCartera">
+              <option value="IN">IN</option>
+              <option value="OUT">OUT</option>
+            </select>
+          </div>
+          <div>
+            <label>Campaña</label>
+            <select id="psCampana"></select>
+          </div>
         </div>
-        <div>
-          <label>Campaña</label>
-          <select id="psCampana"></select>
-        </div>
-      </div>
+      </section>
     </div>
 
     <div class="card">

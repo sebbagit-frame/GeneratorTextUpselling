@@ -1,58 +1,55 @@
+/* ==================== Tokens ==================== */
+/* Paleta compartida por las tres páginas (generador, PreSense y admin). */
+
 :root {
-  --bg: white;
-  --card-bg: #fff;
-  --text: #222;
-  --text-heading: #1a1a2e;
-  --input-bg: #fff;
-  --input-border: #ccc;
-  --resultado-bg: #eef1f5;
-  --dispositivo-bg: #fafbfc;
-  --dispositivo-border: #ddd;
-  --th-color: #4a5568;
-  --table-border: #e2e8f0;
-  --btn-bg: #ff0033;
-  --btn-hover: #245a94;
-  --btn-text: #fff;
-  --copiar-bg: cornflowerblue;
-  --copiar-hover: #276749;
-  --quitar-bg: #c53030;
-  --quitar-hover: #9b2c2c;
-  --editar-bg: #4a5568;
-  --secundario-bg: #718096;
-  --aviso-color: #c53030;
-  --link-color: #245a94;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-heading: #0f172a;
+  --th-color: #64748b; /* texto secundario; index.html lo usa inline */
+  --input-bg: #ffffff;
+  --border: #e2e8f0;
+  --link-color: #64748b;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #16a34a;
+  --surface-hover: #f1f5f9;
+  --focus-ring: rgba(79, 70, 229, 0.25);
+  --danger-ring: rgba(220, 38, 38, 0.3);
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
+  color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg: #15171c;
-  --card-bg: #1f232b;
-  --text: #e2e5ea;
-  --text-heading: #f0f2f5;
-  --input-bg: #2a2f3a;
-  --input-border: #3d4250;
-  --resultado-bg: #262b35;
-  --dispositivo-bg: #242832;
-  --dispositivo-border: #3d4250;
-  --th-color: #9aa3b2;
-  --table-border: #333846;
-  --btn-bg: #ff4d6d;
-  --btn-hover: #3a6ea8;
-  --btn-text: #fff;
-  --copiar-bg: #6495ed;
-  --copiar-hover: #2f7d57;
-  --quitar-bg: #e05353;
-  --quitar-hover: #c94444;
-  --editar-bg: #5a6478;
-  --secundario-bg: #7d8aa0;
-  --aviso-color: #ff8080;
-  --link-color: #ffffff;
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text: #e2e8f0;
+  --text-heading: #f1f5f9;
+  --th-color: #94a3b8;
+  --input-bg: #0f172a;
+  --border: #334155;
+  --link-color: #94a3b8;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --surface-hover: #273449;
+  --focus-ring: rgba(99, 102, 241, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
 }
 
+/* ==================== Base ==================== */
+
 body {
-  font-family: Arial, sans-serif;
-  max-width: 650px;
-  margin: 30px auto;
-  padding: 0 15px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 720px;
+  margin: 32px auto;
+  padding: 0 24px;
   background: var(--bg);
   color: var(--text);
   transition: background 0.2s ease, color 0.2s ease;
@@ -63,40 +60,116 @@ body.admin-page {
 body.presense-page {
   max-width: 1000px;
 }
-#loginView {
-  max-width: 420px;
-}
 h2 {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-heading);
+  margin: 0 0 4px;
+  padding-right: 48px;
+}
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0 0 16px;
 }
 a {
   color: var(--link-color);
+  text-decoration: none;
+  font-size: 13px;
 }
+a:hover {
+  color: var(--accent);
+}
+
+/* ==================== Cards ==================== */
+
 .card {
   background: var(--card-bg);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+/* Un label suelto al inicio de la card hace de título (Kits, Resultado...). */
+.card > label:first-child {
+  margin-top: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+/* Bloques del formulario: secciones con título separadas por una línea. */
+.bloque + .bloque {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.bloque > h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.bloque + button {
+  margin-top: 24px;
+}
+
+/* ==================== Formularios ==================== */
+
+#loginView {
+  max-width: 420px;
 }
 label {
   display: block;
-  margin-top: 12px;
-  font-weight: 600;
-  font-size: 14px;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--th-color);
 }
 input,
 select,
 textarea {
   width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
+  min-height: 38px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   box-sizing: border-box;
-  font-size: 14px;
+  font: inherit;
   background: var(--input-bg);
+  color: var(--text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+input[readonly] {
+  background: var(--bg);
+  color: var(--th-color);
+}
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
   color: var(--text);
 }
 .row {
@@ -106,23 +179,30 @@ textarea {
 .row > div {
   flex: 1;
 }
+/* Evita que una opción larga (ej. "1 Pago - Tarjeta de Crédito...") ensanche la fila. */
+.bloque .row > div,
+.dispositivo-item .row > div {
+  min-width: 0;
+}
 .campo-grupo {
-  border: 1px solid var(--dispositivo-border);
-  border-radius: 8px;
-  padding: 12px 14px 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px 16px;
   margin: 16px 0 0;
 }
 .campo-grupo legend {
   padding: 0 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--th-color);
 }
 h4.subtitulo {
   margin: 20px 0 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--th-color);
 }
@@ -140,71 +220,23 @@ h4.subtitulo {
   align-items: center;
   gap: 6px;
 }
-button {
-  margin-top: 18px;
-  background: var(--btn-bg);
-  color: var(--btn-text);
-  border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-button:hover {
-  background: var(--btn-hover);
-}
-#resultado,
-#resultadoComLog,
-#outSpeechComLog {
-  white-space: pre-wrap;
-  background: var(--resultado-bg);
-  color: var(--text);
-  padding: 15px;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-  min-height: 40px;
-}
-.oculto {
-  display: none;
-}
-.copiar {
-  background: var(--copiar-bg);
-  margin-left: 8px;
-}
-.copiar:hover {
-  background: var(--copiar-hover);
-}
-.dispositivo-item {
-  border: 1px solid var(--dispositivo-border);
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 10px;
-  position: relative;
-  background: var(--dispositivo-bg);
-}
-.dispositivo-item .quitar {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--quitar-bg);
-  padding: 3px 9px;
-  font-size: 12px;
-  margin: 0;
-}
-.dispositivo-item .quitar:hover {
-  background: var(--quitar-hover);
-}
-.disp-aviso {
-  color: var(--aviso-color);
-  font-size: 13px;
-  margin-top: 6px;
-}
 .texto-ayuda {
   display: block;
   font-size: 12px;
   color: var(--th-color);
   margin-top: 4px;
+}
+.campo-error {
+  border-color: var(--danger) !important;
+}
+.campo-error:focus {
+  box-shadow: 0 0 0 3px var(--danger-ring);
+}
+.mensaje-error-campo {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
 }
 .disp-adicional::-webkit-outer-spin-button,
 .disp-adicional::-webkit-inner-spin-button {
@@ -214,66 +246,57 @@ button:hover {
 .disp-adicional {
   -moz-appearance: textfield;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-  font-size: 14px;
+
+/* ==================== Botones ==================== */
+/* Principal: acento índigo. Secundario: transparente con borde.
+   Destructivo: rojo de peligro (Eliminar del admin; las "x"/Quitar de los
+   generadores son grises y se ponen rojas en hover/foco). */
+
+button {
+  margin-top: 20px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-th,
-td {
-  text-align: left;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--table-border);
+button:hover {
+  background: var(--accent-hover);
 }
-th {
-  color: var(--th-color);
-  font-size: 12px;
-  text-transform: uppercase;
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
-table button {
-  margin-top: 0;
-  padding: 4px 10px;
-  font-size: 12px;
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
-table .editar {
-  background: var(--editar-bg);
-}
-.tabla-scroll {
-  overflow-x: auto;
-  margin-top: 16px;
-}
-.tabla-scroll table {
-  margin-top: 0;
-}
-#tablaDispositivos th,
-#tablaDispositivos td {
-  padding: 6px 8px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-#tablaDispositivos th.col-narrow {
-  width: 64px;
-}
-.td-truncate {
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* La columna de acciones (Editar/Eliminar) queda pegada al borde derecho
-   mientras se scrollea horizontalmente, para que nunca quede cortada fuera
-   de vista detrás de las columnas de precios/RMR. */
-#tablaDispositivos th:last-child,
-#tablaDispositivos td:last-child {
-  position: sticky;
-  right: 0;
-  background: var(--card-bg);
-  box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.25);
+button.secundario,
+.editar {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
 }
 button.secundario {
-  background: var(--secundario-bg);
   margin-left: 8px;
+}
+button.secundario:hover,
+.editar:hover {
+  background: var(--surface-hover);
+}
+.eliminar {
+  background: var(--danger);
+  color: #fff;
+}
+.eliminar:hover {
+  background: var(--danger-hover);
+}
+.eliminar:focus-visible {
+  box-shadow: 0 0 0 3px var(--danger-ring);
 }
 #themeToggle {
   position: fixed;
@@ -286,7 +309,7 @@ button.secundario {
   border-radius: 50%;
   background: var(--card-bg);
   color: var(--text);
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--border);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   font-size: 16px;
   display: flex;
@@ -295,38 +318,173 @@ button.secundario {
   cursor: pointer;
 }
 #themeToggle:hover {
-  background: var(--card-bg);
-  opacity: 0.85;
+  background: var(--surface-hover);
 }
 #restablecerTopBtn {
   position: fixed;
   top: 16px;
   left: 16px;
   margin: 0;
+  background: var(--card-bg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+#restablecerTopBtn:hover {
+  background: var(--surface-hover);
 }
 
-/* ---- PreSense: filas de kits/dispositivos y cuadro de resultado ---- */
+/* ==================== Generador principal ==================== */
+
+.dispositivo-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+  position: relative;
+  background: var(--bg);
+}
+/* "x" de quitar: discreta en reposo, roja en hover/foco. */
+.dispositivo-item .quitar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1;
+  background: var(--card-bg);
+  color: var(--th-color);
+  border-color: var(--border);
+}
+.dispositivo-item .quitar:hover,
+.dispositivo-item .quitar:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.dispositivo-item .quitar:focus-visible {
+  box-shadow: 0 0 0 3px var(--danger-ring);
+}
+.dispositivo-item > label:first-of-type {
+  margin-top: 0;
+}
+.disp-aviso {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 6px;
+}
+/* En pantallas anchas, los campos del ítem van en grilla label | campo. Los
+   labels y selects son hermanos sueltos (template de main.js), por eso los
+   wrappers usan subgrid y los mensajes de error van a la columna del campo. */
+@media (min-width: 601px) {
+  .dispositivo-item {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    column-gap: 16px;
+    row-gap: 12px;
+    align-items: center;
+  }
+  .dispositivo-item > label,
+  .dispositivo-item > select,
+  .dispositivo-item > input,
+  .dispositivo-item .row label,
+  .dispositivo-item .row input {
+    margin-top: 0;
+  }
+  /* Deja lugar a la "x" de quitar, que está en la esquina superior derecha. */
+  .dispositivo-item > .disp-linea {
+    width: calc(100% - 40px);
+  }
+  .dispositivo-item > .disp-espack-wrap:not(.oculto),
+  .dispositivo-item > .disp-pack-wrap:not(.oculto),
+  .dispositivo-item > .disp-plazo-wrap:not(.oculto) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: center;
+  }
+  .dispositivo-item [class$="-wrap"] > label,
+  .dispositivo-item [class$="-wrap"] > select {
+    margin-top: 0;
+  }
+  .dispositivo-item > .row,
+  .dispositivo-item > label:last-child {
+    grid-column: 1 / -1;
+  }
+  .dispositivo-item .row label {
+    margin-bottom: 6px;
+  }
+  .dispositivo-item > .disp-aviso,
+  .dispositivo-item > .texto-ayuda,
+  .dispositivo-item .mensaje-error-campo {
+    grid-column: 2;
+    margin-top: -4px;
+  }
+}
+
+/* Resultados: el label hace de título y "Copiar" queda a su derecha. */
+.card:has(> .copiar):not(.oculto) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+}
+.card:has(> .copiar) > label {
+  grid-column: 1;
+  grid-row: 1;
+}
+.card:has(> .copiar) > .copiar {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+.card:has(> .copiar) > div {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+#resultado,
+#resultadoComLog,
+#outSpeechComLog {
+  white-space: pre-wrap;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 40px;
+  overflow-wrap: anywhere;
+}
+#resultado:focus,
+#resultadoComLog:focus,
+#outSpeechComLog:focus,
+#outCuerpoMail:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ==================== PreSense ==================== */
+
 .presense-kit-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--table-border);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 .presense-kit-row:last-child {
   border-bottom: none;
-}
-.presense-kit-row input[type="checkbox"] {
-  width: auto;
-  margin-top: 0;
 }
 .presense-kit-row .presense-kit-nombre {
   flex: 1;
   font-size: 14px;
 }
 .presense-disp-item {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--table-border);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 .presense-disp-item:last-child {
   border-bottom: none;
@@ -348,27 +506,33 @@ button.secundario {
 .presense-disp-row button {
   margin-top: 0;
 }
+/* "Quitar" de PreSense: mismo criterio que la "x" del generador. */
+.presense-disp-row .btn-eliminar {
+  margin-left: 0;
+  color: var(--th-color);
+}
+.presense-disp-row .btn-eliminar:hover,
+.presense-disp-row .btn-eliminar:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.presense-disp-row .btn-eliminar:focus-visible {
+  box-shadow: 0 0 0 3px var(--danger-ring);
+}
 .presense-disp-ampliacion-label {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
   color: var(--th-color);
 }
-.presense-disp-ampliacion-label input {
-  width: auto;
-  margin-top: 0;
+.presense-page #generar {
+  margin: 0 0 24px;
 }
-
-.campo-error {
-  border-color: var(--aviso-color) !important;
-}
-.mensaje-error-campo {
-  color: var(--aviso-color);
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
+.presense-page #volver {
+  margin: 0;
 }
 .presense-resultados {
   display: grid;
@@ -379,216 +543,57 @@ button.secundario {
 .presense-resultados .card {
   margin-bottom: 0;
 }
+.presense-resultados + #volver {
+  margin-top: 20px;
+}
+/* Vista previa del mail: "hoja" blanca en ambos temas, porque el cuadro trae
+   estilos inline pensados para Outlook (ver generarHtmlCuadro()). */
+#outCuerpoMail {
+  background: #ffffff;
+  color: #262626;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+}
 
 /* ==================== Admin ==================== */
-/* Todo lo de abajo cuelga de body.admin-page para no afectar al generador
-   principal ni al de PreSense. Reasigna las variables existentes con la
-   paleta del admin y agrega solo las que faltaban. */
 
-body.admin-page {
-  --bg: #f8fafc;
-  --card-bg: #ffffff;
-  --text: #0f172a;
-  --text-heading: #0f172a;
-  --th-color: #64748b;
-  --input-bg: #ffffff;
-  --input-border: #e2e8f0;
-  --table-border: #e2e8f0;
-  --dispositivo-border: #e2e8f0;
-  --link-color: #64748b;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --success: #16a34a;
-  --surface-hover: #f1f5f9;
-  --focus-ring: rgba(79, 70, 229, 0.25);
-  --radius: 12px;
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
-
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 32px auto;
-  padding: 0 24px;
-  color-scheme: light;
-}
-body.admin-page[data-theme="dark"] {
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --text: #e2e8f0;
-  --text-heading: #f1f5f9;
-  --th-color: #94a3b8;
-  --input-bg: #0f172a;
-  --input-border: #334155;
-  --table-border: #334155;
-  --dispositivo-border: #334155;
-  --link-color: #94a3b8;
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --surface-hover: #273449;
-  --focus-ring: rgba(99, 102, 241, 0.4);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
-  color-scheme: dark;
-}
-
-/* ---- Tipografía ---- */
-body.admin-page h2 {
-  font-family: inherit;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
-  padding-right: 48px;
-}
-body.admin-page h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-heading);
-  margin: 0 0 16px;
-}
-body.admin-page a {
-  text-decoration: none;
-  font-size: 13px;
-}
-body.admin-page a:hover {
-  color: var(--accent);
-}
-
-/* ---- Cards ---- */
-body.admin-page .card {
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px;
-  margin-bottom: 24px;
-}
-body.admin-page #composicionWrap {
-  margin-top: 24px;
-  padding-top: 8px;
-  border-top: 1px solid var(--table-border);
-}
-body.admin-page .campo-grupo {
-  border-radius: 10px;
-  padding: 12px 16px 16px;
-}
-body.admin-page .campo-grupo legend,
-body.admin-page h4.subtitulo {
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  color: var(--th-color);
-}
-
-/* ---- Formularios ---- */
-body.admin-page label {
-  margin-top: 14px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--th-color);
-}
-body.admin-page .grid-campos label {
-  margin-top: 0;
-}
-body.admin-page input,
-body.admin-page select,
-body.admin-page textarea {
-  min-height: 38px;
-  padding: 8px 12px;
-  margin-top: 6px;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  font: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-body.admin-page textarea {
-  min-height: 96px;
-  resize: vertical;
-}
-body.admin-page input:focus,
-body.admin-page select:focus,
-body.admin-page textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
 body.admin-page #loginError {
   color: var(--danger);
   font-size: 13px;
   margin: 12px 0 0;
 }
-
-/* ---- Botones ---- */
-body.admin-page button {
-  margin-top: 20px;
-  background: var(--accent);
-  color: #fff;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 9px 16px;
-  font: inherit;
-  font-weight: 500;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-body.admin-page button:hover {
-  background: var(--accent-hover);
-}
-body.admin-page button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-body.admin-page button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-body.admin-page button.secundario,
-body.admin-page .editar {
-  background: transparent;
-  color: var(--text);
-  border-color: var(--input-border);
-}
-body.admin-page button.secundario:hover,
-body.admin-page .editar:hover {
-  background: var(--surface-hover);
-}
-body.admin-page .eliminar {
-  background: var(--danger);
-  color: #fff;
-}
-body.admin-page .eliminar:hover {
-  background: var(--danger-hover);
-}
-body.admin-page .eliminar:focus-visible {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
-}
 body.admin-page #logoutBtn {
   margin: 0;
 }
-body.admin-page #themeToggle {
-  border-radius: 50%;
-  padding: 0;
-  margin: 0;
-  background: var(--card-bg);
-  color: var(--text);
-  border-color: var(--input-border);
-}
-body.admin-page #themeToggle:hover {
-  background: var(--surface-hover);
-  opacity: 1;
+body.admin-page #composicionWrap {
+  margin-top: 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 /* ---- Tablas ---- */
 body.admin-page table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
   font-size: 13px;
 }
 body.admin-page th,
 body.admin-page td {
+  text-align: left;
   padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
 body.admin-page th {
+  color: var(--th-color);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
   white-space: nowrap;
   background: var(--card-bg);
   position: sticky;
@@ -624,19 +629,32 @@ body.admin-page #tablaComposicion :is(th, td):nth-child(n + 2):nth-child(-n + 3)
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.td-truncate {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
+.tabla-scroll {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+body.admin-page .tabla-scroll table {
+  margin-top: 0;
+}
 body.admin-page .tabla-scroll {
-  border: 1px solid var(--table-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   scrollbar-width: thin;
-  scrollbar-color: var(--input-border) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 body.admin-page .tabla-scroll::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 body.admin-page .tabla-scroll::-webkit-scrollbar-thumb {
-  background: var(--input-border);
+  background: var(--border);
   border-radius: 4px;
 }
 /* Solo Dispositivos tiene scroll vertical propio para que el encabezado quede
@@ -648,8 +666,27 @@ body.admin-page .tabla-scroll:has(#tablaDispositivos) {
 body.admin-page #tablaCampanas th {
   position: static;
 }
+#tablaDispositivos th,
+#tablaDispositivos td {
+  padding: 6px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+#tablaDispositivos th.col-narrow {
+  width: 64px;
+}
 body.admin-page #tablaDispositivos th {
   font-size: 11px;
+}
+/* La columna de acciones (Editar/Eliminar) queda pegada al borde derecho
+   mientras se scrollea horizontalmente, para que nunca quede cortada fuera
+   de vista detrás de las columnas de precios/RMR. */
+#tablaDispositivos th:last-child,
+#tablaDispositivos td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--card-bg);
+  box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.25);
 }
 body.admin-page #tablaDispositivos th:last-child {
   z-index: 2;
@@ -658,22 +695,35 @@ body.admin-page #tablaDispositivos tbody tr:hover td:last-child {
   background: var(--surface-hover);
 }
 
-/* ---- Responsive ---- */
+/* ==================== Responsive ==================== */
+
+/* "Restablecer" es fijo arriba a la izquierda: se le hace lugar al título
+   mientras la página no deja margen lateral suficiente. */
+@media (max-width: 980px) {
+  body:has(#restablecerTopBtn) h2 {
+    margin-top: 48px;
+  }
+}
 @media (max-width: 768px) {
-  body.admin-page {
+  body {
     margin: 16px auto;
     padding: 0 16px;
   }
-  body.admin-page .card {
+  .card {
     padding: 16px;
     margin-bottom: 16px;
   }
-  body.admin-page .row {
+  .row {
     flex-direction: column;
     gap: 0;
   }
-  body.admin-page .grid-campos {
+  .grid-campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bloque > button,
+  .bloque + button,
+  .presense-page #generar {
+    width: 100%;
   }
   body.admin-page form > button {
     width: 100%;
@@ -692,7 +742,12 @@ body.admin-page #tablaDispositivos tbody tr:hover td:last-child {
   }
 }
 @media (max-width: 480px) {
-  body.admin-page .grid-campos {
+  .grid-campos {
     grid-template-columns: 1fr;
   }
+}
+
+/* Va al final para ganarle a cualquier regla de clase que fije display. */
+.oculto {
+  display: none;
 }
