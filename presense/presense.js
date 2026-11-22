@@ -192,6 +192,16 @@ function calcular() {
   const kitsInfo = [];
   const dispositivosInfo = [];
 
+  // Detalle línea por línea para la fila "Dispositivos" del cuadro/mail:
+  // una línea por kit y una por dispositivo elegido (sin agrupar por
+  // dispositivoBase, así un pack queda como su propia línea). Los valores
+  // son exactamente los mismos productos (valor cargado x cantidad) que
+  // suman a los totales, así la suma de líneas cierra con el Upfront.
+  // Filas repetidas del mismo dispositivo (y mismo estado de upfront) se
+  // combinan en una sola línea.
+  const lineasDetalle = [];
+  const indiceLineaDispositivo = new Map();
+
   document.querySelectorAll(".kit-check").forEach((chk) => {
     if (!chk.checked) return;
     hayKitSeleccionado = true;
@@ -222,6 +232,18 @@ function calcular() {
       agregarItemDispositivo(kit.nombre, cant);
       nombresDeComposicion.add(kit.nombre);
     }
+
+    lineasDetalle.push({
+      nombre: kit.nombre,
+      cantidad: cant,
+      conUpfront: true,
+      unitarioSinIva: kit.valorSinIva,
+      valorSinIvaTotal: kit.valorSinIva * cant,
+      valorConIvaTotal: kit.valorConIva * cant,
+      incluye: composicion
+        .map((item) => `${item.cantidad * cant} ${item.nombreItem}`)
+        .join(" + "),
+    });
   });
 
   // Cuando hay un kit seleccionado, su upfront ya incluye los dispositivos
@@ -272,6 +294,27 @@ function calcular() {
       totalConIva += d.valorConIva * cant;
     }
 
+    const claveLinea = `${idx}|${tieneUpfrontPropio}`;
+    if (indiceLineaDispositivo.has(claveLinea)) {
+      const linea = lineasDetalle[indiceLineaDispositivo.get(claveLinea)];
+      linea.cantidad += cant;
+      if (tieneUpfrontPropio) {
+        linea.valorSinIvaTotal += d.valorSinIva * cant;
+        linea.valorConIvaTotal += d.valorConIva * cant;
+      }
+    } else {
+      lineasDetalle.push({
+        nombre: d.nombre,
+        cantidad: cant,
+        conUpfront: tieneUpfrontPropio,
+        unitarioSinIva: d.valorSinIva,
+        valorSinIvaTotal: tieneUpfrontPropio ? d.valorSinIva * cant : 0,
+        valorConIvaTotal: tieneUpfrontPropio ? d.valorConIva * cant : 0,
+        incluye: "",
+      });
+      indiceLineaDispositivo.set(claveLinea, lineasDetalle.length - 1);
+    }
+
     // Se agrupa por dispositivoBase (si tiene), no por el nombre real de la
     // variante elegida - así "Pack x3 Shock Sensor (Presense)" aporta 3
     // unidades de "Shock Sensor" en vez de aparecer como su propia entrada.
@@ -306,6 +349,7 @@ function calcular() {
     dispositivosTexto: itemsDispositivos
       .map((i) => `${i.cantidad} ${i.nombre}`)
       .join(" + "),
+    lineasDetalle,
     kitsInfo,
     dispositivosInfo,
     totalRMR,
@@ -517,7 +561,7 @@ document.getElementById("generar").addEventListener("click", () => {
   if (!validarCamposPresense()) return;
 
   const resultadoCalculo = calcular();
-  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto, dispositivosInfo } = resultadoCalculo;
+  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto, dispositivosInfo, lineasDetalle } = resultadoCalculo;
   const dispositivosChequearTecnico = dispositivosInfo.filter((d) => d.chequearTecnico);
   const formaPago = document.getElementById("formaPago").value;
   const cuotas = document.getElementById("cuotasFinanciamiento").value;
@@ -537,6 +581,7 @@ document.getElementById("generar").addEventListener("click", () => {
     upfrontCon: textoUpfrontCon,
     abono: formatoMoneda(totalMensual),
     dispositivosTexto,
+    lineasDetalle,
     fueAbonado: document.getElementById("fueAbonado").checked,
   };
 
@@ -562,7 +607,27 @@ volverBtn.addEventListener("click", () => {
 // datos ya formateados en vez de leerlos del DOM: no hay una vista previa
 // propia del cuadro en pantalla, solo se usa embebido.
 function generarHtmlCuadro(datos) {
-  const { nro, zona, fecha, upfrontSin, upfrontCon, abono, dispositivosTexto, fueAbonado } = datos;
+  const { nro, zona, fecha, upfrontSin, upfrontCon, abono, lineasDetalle = [], fueAbonado } = datos;
+
+  // Una línea por kit/dispositivo, todo con estilos inline (se copia por
+  // innerHTML a Outlook). Los kits suman debajo "Incluye: ..." en gris; los
+  // dispositivos que no suman upfront (kit elegido y sin "Ampliación
+  // Aparte") van como "Sin costo inicial", sin valores.
+  const lineasDispositivosHtml = lineasDetalle
+    .map((l) => {
+      const unitario =
+        l.conUpfront && l.cantidad > 1
+          ? ` (unitario ${formatoMoneda(l.unitarioSinIva)} sin IVA)`
+          : "";
+      const valores = l.conUpfront
+        ? `Sin IVA ${formatoMoneda(l.valorSinIvaTotal)} · Con IVA ${formatoMoneda(l.valorConIvaTotal)}`
+        : "Sin costo inicial";
+      const incluye = l.incluye
+        ? `<div style="font-size:12px;color:#8A8C8E;padding:0 0 0 14px;">Incluye: ${l.incluye}</div>`
+        : "";
+      return `<div style="font-size:14px;color:#262626;padding:3px 0;">${l.cantidad} x ${l.nombre}${unitario} — ${valores}</div>${incluye}`;
+    })
+    .join("");
 
   const filaAviso = fueAbonado
     ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">EL CAMBIO DE TECNOLOGÍA YA SE ENCUENTRA ABONADO.</span>
@@ -581,7 +646,10 @@ function generarHtmlCuadro(datos) {
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront sin IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${upfrontSin}</td></tr>
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Upfront con IVA</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${upfrontCon}</td></tr>
     <tr><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;color:#8A8C8E;font-size:14px;">Abono mensual total</td><td style="padding:9px 18px;border-bottom:1px solid #f0f1f1;text-align:right;font-size:14px;">${abono}</td></tr>
-    <tr><td style="padding:9px 18px;color:#8A8C8E;font-size:14px;">Dispositivos</td><td style="padding:9px 18px;text-align:right;font-size:14px;">${dispositivosTexto}</td></tr>
+    <tr><td colspan="2" style="padding:9px 18px;text-align:left;font-size:14px;">
+      <div style="color:#8A8C8E;font-size:14px;padding:0 0 4px 0;">Dispositivos</div>
+      ${lineasDispositivosHtml}
+    </td></tr>
     <tr><td colspan="2" style="padding:12px 18px;background:#f0f1f1;border-left:3px solid #ED002F;">
       ${filaAviso}
     </td></tr>
@@ -609,7 +677,7 @@ function generarCuerpoMail(datosCuadro, dispositivosChequearTecnico = []) {
     .join("\n    ");
 
   document.getElementById("outCuerpoMail").innerHTML = `
-    <p>Buenas tardes equipo, espero se encuentren bien.</p>
+    <p>Buenas tardes equipo, espero que se encuentren bien.</p>
     <p>En comunicación con el titular, aceptó el cambio de tecnología de VF a PreSense. Adjunto detalle:</p>
     ${cuadroHtml}
     ${lineasChequearTecnico}
