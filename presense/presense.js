@@ -236,10 +236,15 @@ function calcular() {
     lineasDetalle.push({
       nombre: kit.nombre,
       cantidad: cant,
+      seccion: "kit",
       conUpfront: true,
       unitarioSinIva: kit.valorSinIva,
+      unitarioConIva: kit.valorConIva,
       valorSinIvaTotal: kit.valorSinIva * cant,
       valorConIvaTotal: kit.valorConIva * cant,
+      listaSinIvaTotal: kit.valorSinIva * cant,
+      listaConIvaTotal: kit.valorConIva * cant,
+      mensualTotal: kit.mensual * cant,
       incluye: composicion
         .map((item) => `${item.cantidad * cant} ${item.nombreItem}`)
         .join(" + "),
@@ -298,18 +303,31 @@ function calcular() {
     if (indiceLineaDispositivo.has(claveLinea)) {
       const linea = lineasDetalle[indiceLineaDispositivo.get(claveLinea)];
       linea.cantidad += cant;
+      linea.listaSinIvaTotal += d.valorSinIva * cant;
+      linea.listaConIvaTotal += d.valorConIva * cant;
+      linea.mensualTotal += d.mensual * cant;
       if (tieneUpfrontPropio) {
         linea.valorSinIvaTotal += d.valorSinIva * cant;
         linea.valorConIvaTotal += d.valorConIva * cant;
       }
     } else {
+      // Sección del cuadro: sin kit, cada dispositivo es una compra normal
+      // ("dispositivo"); con kit, o es "Ampliación aparte" (suma upfront) o
+      // un adicional sin costo inicial (sus valores de lista son solo
+      // informativos, no suman al Upfront).
+      const seccion = !hayKitSeleccionado ? "dispositivo" : ampliacionAparte ? "aparte" : "adicional";
       lineasDetalle.push({
         nombre: d.nombre,
         cantidad: cant,
+        seccion,
         conUpfront: tieneUpfrontPropio,
         unitarioSinIva: d.valorSinIva,
+        unitarioConIva: d.valorConIva,
         valorSinIvaTotal: tieneUpfrontPropio ? d.valorSinIva * cant : 0,
         valorConIvaTotal: tieneUpfrontPropio ? d.valorConIva * cant : 0,
+        listaSinIvaTotal: d.valorSinIva * cant,
+        listaConIvaTotal: d.valorConIva * cant,
+        mensualTotal: d.mensual * cant,
         incluye: "",
       });
       indiceLineaDispositivo.set(claveLinea, lineasDetalle.length - 1);
@@ -353,6 +371,7 @@ function calcular() {
     kitsInfo,
     dispositivosInfo,
     totalRMR,
+    mensualidadVigente,
   };
 }
 
@@ -561,7 +580,7 @@ document.getElementById("generar").addEventListener("click", () => {
   if (!validarCamposPresense()) return;
 
   const resultadoCalculo = calcular();
-  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto, dispositivosInfo, lineasDetalle } = resultadoCalculo;
+  const { totalSinIva, totalConIva, totalMensual, dispositivosTexto, dispositivosInfo, lineasDetalle, mensualidadVigente } = resultadoCalculo;
   const dispositivosChequearTecnico = dispositivosInfo.filter((d) => d.chequearTecnico);
   const formaPago = document.getElementById("formaPago").value;
   const cuotas = document.getElementById("cuotasFinanciamiento").value;
@@ -582,6 +601,7 @@ document.getElementById("generar").addEventListener("click", () => {
     abono: formatoMoneda(totalMensual),
     dispositivosTexto,
     lineasDetalle,
+    mensualidadVigente: formatoMoneda(mensualidadVigente),
     fueAbonado: document.getElementById("fueAbonado").checked,
   };
 
@@ -607,27 +627,48 @@ volverBtn.addEventListener("click", () => {
 // datos ya formateados en vez de leerlos del DOM: no hay una vista previa
 // propia del cuadro en pantalla, solo se usa embebido.
 function generarHtmlCuadro(datos) {
-  const { nro, zona, fecha, upfrontSin, upfrontCon, abono, lineasDetalle = [], fueAbonado } = datos;
+  const { nro, zona, fecha, upfrontSin, upfrontCon, abono, lineasDetalle = [], mensualidadVigente = "$0", fueAbonado } = datos;
 
-  // Una línea por kit/dispositivo, todo con estilos inline (se copia por
-  // innerHTML a Outlook). Los kits suman debajo "Incluye: ..." en gris; los
-  // dispositivos que no suman upfront (kit elegido y sin "Ampliación
-  // Aparte") van como "Sin costo inicial", sin valores.
-  const lineasDispositivosHtml = lineasDetalle
-    .map((l) => {
-      const unitario =
-        l.conUpfront && l.cantidad > 1
-          ? ` (unitario ${formatoMoneda(l.unitarioSinIva)} sin IVA)`
-          : "";
-      const valores = l.conUpfront
-        ? `Sin IVA ${formatoMoneda(l.valorSinIvaTotal)} · Con IVA ${formatoMoneda(l.valorConIvaTotal)}`
-        : "Sin costo inicial";
-      const incluye = l.incluye
-        ? `<div style="font-size:12px;color:#8A8C8E;padding:0 0 0 14px;">Incluye: ${l.incluye}</div>`
+  // Fila "Dispositivos" desglosada por secciones, todo con estilos inline
+  // (se copia por innerHTML a Outlook). Cada ítem muestra SIEMPRE Sin IVA /
+  // Con IVA / Mensual (valor cargado x cantidad, sin recalcular IVA). Los
+  // "Adicionales sin costo inicial" muestran su valor de lista solo como
+  // referencia: no suman al Upfront (su mensual sí suma al Abono). Al final
+  // va la mensualidad vigente, para que las líneas cierren a la vista con
+  // el Abono mensual total.
+  const estiloValor = "font-size:13px;color:#262626;padding:0 0 0 14px;";
+  const estiloGris = "font-size:12px;color:#8A8C8E;padding:0 0 0 14px;";
+
+  const itemHtml = (l) => {
+    const unitario =
+      l.cantidad > 1
+        ? `<div style="${estiloGris}">Unitario: Sin IVA ${formatoMoneda(l.unitarioSinIva)} · Con IVA ${formatoMoneda(l.unitarioConIva)}</div>`
         : "";
-      return `<div style="font-size:14px;color:#262626;padding:3px 0;">${l.cantidad} x ${l.nombre}${unitario} — ${valores}</div>${incluye}`;
-    })
-    .join("");
+    const incluye = l.incluye ? `<div style="${estiloGris}">Incluye: ${l.incluye}</div>` : "";
+    const noSuma =
+      l.seccion === "adicional" ? `<div style="${estiloGris}">No suma al Upfront</div>` : "";
+    return `<div style="padding:4px 0 6px 0;text-align:left;">
+        <div style="font-size:14px;color:#262626;font-weight:bold;">${l.cantidad} x ${l.nombre}</div>
+        <div style="${estiloValor}">Sin IVA: ${formatoMoneda(l.listaSinIvaTotal)}</div>
+        <div style="${estiloValor}">Con IVA: ${formatoMoneda(l.listaConIvaTotal)}</div>
+        <div style="${estiloValor}">Mensual: ${formatoMoneda(l.mensualTotal)}</div>
+        ${unitario}${incluye}${noSuma}
+      </div>`;
+  };
+
+  const seccionHtml = (titulo, seccion) => {
+    const items = lineasDetalle.filter((l) => l.seccion === seccion);
+    if (items.length === 0) return "";
+    return `<div style="font-size:13px;color:#AB192D;font-weight:bold;padding:8px 0 2px 0;text-align:left;">${titulo}</div>${items.map(itemHtml).join("")}`;
+  };
+
+  const lineasDispositivosHtml = [
+    seccionHtml("Kit", "kit"),
+    seccionHtml("Adicionales sin costo inicial", "adicional"),
+    seccionHtml("Ampliación aparte", "aparte"),
+    seccionHtml("Dispositivos", "dispositivo"),
+  ].join("") +
+    `<div style="font-size:13px;color:#262626;padding:8px 0 0 0;border-top:1px solid #f0f1f1;text-align:left;">Mensualidad vigente actual: ${mensualidadVigente}</div>`;
 
   const filaAviso = fueAbonado
     ? `<span style="font-size:13px;font-weight:bold;color:#1a7f37;display:block;">EL CAMBIO DE TECNOLOGÍA YA SE ENCUENTRA ABONADO.</span>
