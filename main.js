@@ -159,9 +159,23 @@ function limpiarErrorCampo(el) {
   limpiarErrorEn(el);
 }
 
+// Cantidad de decimales con que se muestran los montos (se TRUNCAN, no se
+// redondean). Hoy 0: montos enteros. Con 2 se muestran centavos con el
+// mismo formato es-AR (separador de miles "." y decimal ","). Los cálculos
+// nunca truncan: solo este formateo final, y el "$" lo agrega quien llama.
+const DECIMALES = 0;
+
 function formatoMoneda(num) {
-  const truncado = Math.trunc(num);
-  return truncado.toLocaleString("es-AR");
+  const factor = 10 ** DECIMALES;
+  // Con decimales, se corrige el error de punto flotante antes de truncar
+  // (ej. 1.15 * 100 = 114.99999...). Con DECIMALES = 0 no se toca el número,
+  // así el resultado queda idéntico a Math.trunc(num).
+  const escalado = DECIMALES > 0 ? Number((num * factor).toFixed(6)) : num;
+  const truncado = Math.trunc(escalado) / factor;
+  return truncado.toLocaleString("es-AR", {
+    minimumFractionDigits: DECIMALES,
+    maximumFractionDigits: DECIMALES,
+  });
 }
 
 // Convierte el valor de un <input type="date"> (yyyy-mm-dd) a "DD/MM" para
@@ -946,7 +960,13 @@ async function generar() {
 
     // Adicional (RMR) + plan de las cámaras Arlo, ahora por dispositivo en
     // vez de acumulado en un total global.
-    let parteAdicional = `Adicional en la cuota: $${formatoMoneda(adicionalItem)}`;
+    // El adicional (RMR) del catálogo ya viene con IVA: el Sin IVA se saca
+    // sobre el total (adicional x cantidad). Se redondea a 2 decimales antes
+    // de formatear para absorber el error de punto flotante de /1.21 (ej.
+    // 25196.9999... -> 25197), pero formatoMoneda() sigue truncando
+    // (8997.52 -> $8.997). Solo en Mantenimiento; ComLog no lo muestra.
+    const adicionalSinIva = Math.round((adicionalItem / 1.21) * 100) / 100;
+    let parteAdicional = `Adicional en la cuota: SIN IVA: $${formatoMoneda(adicionalSinIva)} CON IVA: $${formatoMoneda(adicionalItem)}`;
     if (el.dataset.tipoPlan) {
       const plazo = el.querySelector(".disp-plazo").value;
       parteAdicional += `. Plan ${el.dataset.tipoPlan} ${plazo} días`;
@@ -960,7 +980,7 @@ async function generar() {
     }
 
     if (cobrado && !todosCobrados) {
-      bloque = `***NO COBRAR AMPLIACIÓN YA ABONADA***  ${bloque}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
+      bloque = `***NO COBRAR AMPLIACIÓN YA ABONADA*** ${bloque}***NO COBRAR AMPLIACIÓN YA ABONADA***`;
     } else if (!cobrado && algunCobrado) {
       // Caso mixto: este dispositivo no está abonado, pero algún otro sí -
       // se aclara que este en particular se abona en el momento de la
